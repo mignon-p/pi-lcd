@@ -1,5 +1,25 @@
+module I2C
+  ( I2cHandle
+  , Segment (..)
+  , i2cOpen
+  , i2cTransaction
+  , i2cClose
+  ) where
+
+import Foreign.C.Error
+import Foreign.C.Types
+import Foreign.Marshal.Alloc
+import Foreign.Marshal.Array
+import System.Posix.IO
+import System.Posix.Types
+
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+
+foreign import ccall "sys/ioctl.h ioctl" c_ioctl ::
+  CInt -> CULong -> Ptr I2cRdwrIoctlData -> IO CInt
+
+type I2cHandle = Fd
 
 data Segment = Read Int | Write [Word8]
 
@@ -11,7 +31,7 @@ data I2cRdwrIoctlData =
 
 instance Storable I2cRdwrIoctlData where
   sizeOf _ = #{size struct i2c_rdwr_ioctl_data}
-  alignment _ = 4 -- having trouble getting #alignment to work
+  alignment x = alignment (i2c_nmsgs x)
   peek x = I2cRdwrIoctlData
            <$> #{peek struct i2c_rdwr_ioctl_data, msgs}  x
            <*> #{peek struct i2c_rdwr_ioctl_data, nmsgs} x
@@ -29,12 +49,12 @@ data I2cMsg =
 
 instance Storable I2cMsg where
   sizeOf _ = #{size struct i2c_msg}
-  alignment _ = 4 -- having trouble getting #alignment to work
+  alignment x = alignment (i2c_buf x)
   peek x = I2cMsg
-           <$> #{peek struct i2c_msg, addr} x
+           <$> #{peek struct i2c_msg, addr}  x
            <*> #{peek struct i2c_msg, flags} x
-           <*> #{peek struct i2c_msg, len} x
-           <*> #{peek struct i2c_msg, buf} x
+           <*> #{peek struct i2c_msg, len}   x
+           <*> #{peek struct i2c_msg, buf}   x
   poke p x = do
     #{poke struct i2c_msg, addr}  p (i2c_addr x)
     #{poke struct i2c_msg, flags} p (i2c_flags x)
@@ -44,15 +64,57 @@ instance Storable I2cMsg where
 flagRd :: Word16
 flagRd = #const I2C_M_RD
 
+i2cRdwr :: CULong
+i2cRdwr = #const I2C_RDWR
+
 segLength :: Segment -> Int
 segLength (Read n) = n
 segLength (Write xs) = length xs
 
-i2cTransaction :: Fd -> Int -> [Segment] -> IO [[Word8]]
+fillOutSegments :: Int -> [Segment] -> Ptr I2cMsg -> Ptr Word8 -> IO ()
+fillOutSegments _ [] _ _ = return ()
+fillOutSegments addr (seg:segs) segPtr bytePtr = do
+  let len = segLength seg
+      msg = I2cMsg
+            { i2c_addr = addr
+            , i2c_flags = case seg of
+                            (Read _) -> flagRd
+                            (Write _) -> 0
+            , i2c_len = len
+            , i2c_buf = bytePtr
+            }
+  poke segPtr msg
+  case seg of
+    (Read _) -> return ()
+    (Write x) -> pokeArray bytePtr x
+  fillOutSegments addr segs (advancePtr segPtr 1) (advancePtr bytePtr len)
+
+collectResults :: [Segment] -> Ptr Word8 -> IO [[Word8]]
+collectResults [] _ = return []
+collectResults ((Read n):segs) bytePtr = do
+  xs <- peekArray n bytePtr
+  rest <- collectResults segs (advancePtr bytePtr n)
+  return $ xs : rest
+collectResults ((Write xs):segs) bytePtr =
+  collectResults segs $ advancePtr bytePtr $ length xs
+
+i2cTransaction :: I2cHandle -> Int -> [Segment] -> IO [[Word8]]
 i2cTransaction (Fd fd) addr segs = do
   let len = sum $ map segLength segs
+      nSegs = length segs
   allocaArray len $ \bytePtr -> do
-    allocaArray (length segs) $ \segPtr -> do
-      fillOutSegments segs segPtr bytePtr
+    allocaArray nSegs $ \segPtr -> do
+      fillOutSegments addr segs segPtr bytePtr
       alloca $ \ioctlPtr -> do
-        TODO
+        poke ioctlPtr $ I2cRdwrIoctlData segPtr $ fromIntegral nSegs
+        r <- c_ioctl fd i2cRdwr
+        when (r < 0) $ throwErrno "i2cTransaction"
+        collectResults segs bytePtr
+
+i2cOpen :: Int -> IO I2cHandle
+i2cOpen bus =
+  let name = "/dev/i2c-" ++ show bus
+  openFd name ReadWrite Nothing defaultFileFlags
+
+i2cClose :: I2cHandle -> IO ()
+i2cClose = closeFd
