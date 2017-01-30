@@ -5,6 +5,8 @@ module I2C
   , Segment (..)
   , i2cOpen
   , i2cTransaction
+  , i2cReadReg
+  , i2cWriteReg
   , i2cClose
   ) where
 
@@ -125,3 +127,13 @@ i2cOpen bus = do
 
 i2cClose :: I2cHandle -> IO ()
 i2cClose = closeFd
+
+i2cReadReg :: I2cHandle -> Int -> Word8 -> Int -> IO [Word8]
+i2cReadReg h addr reg len = do
+  [r] <- i2cTransaction h addr [Write [reg], Read len]
+  return r
+
+i2cWriteReg :: I2cHandle -> Int -> Word8 -> [Word8] -> IO ()
+i2cWriteReg h addr reg d = do
+  i2cTransaction h addr [Write (reg:d)]
+  return ()

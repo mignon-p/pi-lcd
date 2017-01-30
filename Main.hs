@@ -1,13 +1,19 @@
-import I2C
+import Control.Monad
+import Data.Bits
+import Data.Word
+import Text.Printf
 
-segs :: [Segment]
-segs =
-  [ Write [0]
-  , Read 0x16
-  ]
+import I2C
+import PiLcd
+
+printChanges :: I2cHandle -> Int -> Word8 -> IO ()
+printChanges h addr old = do
+  b' <- readGpioA h addr
+  let b = (b' .&. 0x1f) `xor` 0x1f
+  when (b /= old) $ putStrLn $ printf "%02x" b
+  printChanges h addr b
 
 main = do
   h <- i2cOpen 1
-  r <- i2cTransaction h 0x20 segs
+  printChanges h 0x20 0xff
   i2cClose h
-  print r
