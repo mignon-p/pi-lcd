@@ -3,7 +3,7 @@ import I2C
 segs :: [Segment]
 segs =
   [ Write [0]
-  , Read [0x16]
+  , Read 0x16
   ]
 
 main = do

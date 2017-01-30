@@ -1,3 +1,5 @@
+{-# LANGUAGE ForeignFunctionInterface #-}
+
 module I2C
   ( I2cHandle
   , Segment (..)
@@ -6,10 +8,15 @@ module I2C
   , i2cClose
   ) where
 
+import Control.Applicative
+import Control.Monad
+import Data.Word
 import Foreign.C.Error
 import Foreign.C.Types
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Array
+import Foreign.Ptr
+import Foreign.Storable
 import System.Posix.IO
 import System.Posix.Types
 
@@ -76,11 +83,11 @@ fillOutSegments _ [] _ _ = return ()
 fillOutSegments addr (seg:segs) segPtr bytePtr = do
   let len = segLength seg
       msg = I2cMsg
-            { i2c_addr = addr
+            { i2c_addr = fromIntegral addr
             , i2c_flags = case seg of
                             (Read _) -> flagRd
                             (Write _) -> 0
-            , i2c_len = len
+            , i2c_len = fromIntegral len
             , i2c_buf = bytePtr
             }
   poke segPtr msg
@@ -107,12 +114,12 @@ i2cTransaction (Fd fd) addr segs = do
       fillOutSegments addr segs segPtr bytePtr
       alloca $ \ioctlPtr -> do
         poke ioctlPtr $ I2cRdwrIoctlData segPtr $ fromIntegral nSegs
-        r <- c_ioctl fd i2cRdwr
+        r <- c_ioctl fd i2cRdwr ioctlPtr
         when (r < 0) $ throwErrno "i2cTransaction"
         collectResults segs bytePtr
 
 i2cOpen :: Int -> IO I2cHandle
-i2cOpen bus =
+i2cOpen bus = do
   let name = "/dev/i2c-" ++ show bus
   openFd name ReadWrite Nothing defaultFileFlags
 
