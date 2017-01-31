@@ -113,7 +113,7 @@ lcdInitialize cb = do
   write4 cb instReg 3
   write4 cb instReg 2
   busyWait cb
-  doCmd cb 0x23 -- 2 display lines
+  doCmd cb 0x2f -- 2 display lines
   lcdControl cb False False False -- display off
   lcdClear cb
   lcdMode cb True False -- left-to-right, no scrolling
