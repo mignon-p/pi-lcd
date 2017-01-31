@@ -11,8 +11,10 @@ printChanges lcd addr color = do
   b <- getButtonEvent lcd
   color' <- case b of
               Nothing -> return color
-              (Just btn) -> do
-                let nc = 7 .&. (color + 1)
+              (Just btn@(ButtonEvent _ dir)) -> do
+                let nc = case dir of
+                           Press -> 7 .&. (color + 1)
+                           Release -> color
                     nc' = toEnum nc
                 setBacklightColor lcd nc'
                 putStrLn $ (show btn) ++ " " ++ (show nc')

@@ -3,6 +3,7 @@ module PiLcd
   , Color(..)
   , Button(..)
   , ButtonDirection(..)
+  , ButtonEvent(..)
   , mkPiLcd
   , getButtons
   , buttonSelect
