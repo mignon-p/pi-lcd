@@ -4,12 +4,14 @@ module LcdLowLevel
   , lcdInitialize
   , lcdClear
   , lcdControl
+  , lcdWrite
   , bitIf
   ) where
 
 import Control.Concurrent
 import Control.Monad
 import Data.Bits
+import qualified Data.ByteString as B
 import Data.Word
 
 data LcdBus =
@@ -114,12 +116,24 @@ lcdInitialize cb = do
   doCmd cb 0x23 -- 2 display lines
   lcdControl cb False False False -- display off
   lcdClear cb
-  lcdMode cb True False
+  lcdMode cb True False -- left-to-right, no scrolling
+
+  -- "lcdClear" seems to leave some black boxes in the first row,
+  -- so let's really clear the display by writing spaces
+  let spaces = B.replicate 40 0x20
+  lcdWrite cb 0 0 spaces
+  lcdWrite cb 1 0 spaces
+  lcdHome cb
   lcdControl cb True False False -- display on
 
 doCmd :: LcdCallbacks -> Word8 -> IO ()
 doCmd cb cmd = do
   write8 cb instReg cmd
+  busyWait cb
+
+doData :: LcdCallbacks -> Word8 -> IO ()
+doData cb cmd = do
+  write8 cb dataReg cmd
   busyWait cb
 
 busyWait :: LcdCallbacks -> IO ()
@@ -135,6 +149,9 @@ bitIf b n = if b then bit n else 0
 lcdClear :: LcdCallbacks -> IO ()
 lcdClear cb = doCmd cb (bit 0)
 
+lcdHome :: LcdCallbacks -> IO ()
+lcdHome cb = doCmd cb (bit 1)
+
 lcdControl :: LcdCallbacks -> Bool -> Bool -> Bool -> IO ()
 lcdControl cb d c b =
   doCmd cb (bit 3 +
@@ -147,3 +164,9 @@ lcdMode cb id s =
   doCmd cb (bit 2 +
             bitIf id 1 +
             bitIf id 0)
+
+lcdWrite :: LcdCallbacks -> Word8 -> Word8 -> B.ByteString -> IO ()
+lcdWrite cb line col bs = do
+  let pos = col + line * 0x40
+  doCmd cb (0x80 .|. pos)
+  forM_ (B.unpack bs) $ \b -> doData cb b
