@@ -117,15 +117,6 @@ lcdInitialize cb = do
   lcdControl cb False False False -- display off
   lcdClear cb
   lcdMode cb True False -- left-to-right, no scrolling
-
-  -- "lcdClear" seems to leave some black boxes in the first row,
-  -- so let's really clear the display by writing spaces
-  let spaces = B.replicate 40 0x21
-  lcdWrite cb 0 0 spaces
-  lcdWrite cb 1 0 spaces
-  bs <- lcdRead cb 1 0 40
-  print bs
-  lcdHome cb
   lcdControl cb True False False -- display on
 
 doCmd :: LcdCallbacks -> Word8 -> IO ()
