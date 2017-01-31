@@ -1,3 +1,26 @@
+module UnicodeLcd
+  ( Lcd
+  , supportedChars
+  , updateDisplay
+  ) where
+
+import Control.Monad
+import Data.Char
+import qualified Data.ByteString as B
+import Data.IORef
+import Data.List
+import Data.Maybe
+import qualified Data.Text as T
+import Data.Word
+
+import LcdLowLevel
+
+data Lcd =
+  Lcd
+  { lcdCb :: LcdCallbacks
+  , lcdLines :: IORef [B.ByteString]
+  }
+
 table :: [(Int, Word8)]
 table =
   [ (0x25B6, 0x10)  -- ▶ BLACK RIGHT-POINTING TRIANGLE
@@ -54,10 +77,63 @@ table =
 
 supportedChars :: [Char]
 supportedChars =
-  map ord $ sort $ map fst table ++ [0x20..0x7e] ++ [0xa1..0xff]
+  map chr $ sort $ map fst table ++ [0x20..0x7e] ++ [0xa1..0xff]
 
 unicodeToByte :: Int -> Maybe Word8
 unicodeToByte c =
   if (c >= 0x20 && c <= 0x7e) || (c >= 0xa1 && c <= 0xff)
   then Just $ fromIntegral c
   else lookup c table
+
+ff :: (Int, [(Int, Int)]) -> [Bool] -> (Int, [(Int, Int)])
+ff (len, spans) bools =
+  let myLen = length bools
+      polarity = head bools
+      spans' = if polarity
+               then spans -- new bytes and old bytes are equal
+               else (len, myLen) : spans
+      len' = len + myLen
+  in (len', spans')
+
+extractBytes :: B.ByteString -> (Int, Int) -> (Int, B.ByteString)
+extractBytes bs (col, len) = (col, subStr)
+  where subStr = B.take len $ B.drop col bs
+
+findSpans :: B.ByteString -> B.ByteString -> [(Int, B.ByteString)]
+findSpans old new =
+  let bitMap = zipWith (==) (B.unpack old) (B.unpack new)
+      grp = group bitMap
+      pairs = snd $ foldl' ff (0, []) grp
+  in map (extractBytes new) pairs
+
+addLine :: [(Int, B.ByteString)] -> Int -> [(Int, Int, B.ByteString)]
+addLine spans line = map f spans
+  where f (col, bs) = (line, col, bs)
+
+bytesToSpans :: [B.ByteString] -> [B.ByteString] -> [(Int, Int, B.ByteString)]
+bytesToSpans old new =
+  let spans = zipWith findSpans old new
+      spans' = zipWith addLine spans [0..]
+  in concat spans'
+
+numColumns = 16
+numLines = 2
+
+ensureLength :: [T.Text] -> [T.Text]
+ensureLength ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
+  where
+    ensureCols t =
+      T.take numColumns $ T.append t $ T.replicate numColumns $ T.singleton ' '
+
+txtToBs :: T.Text -> B.ByteString
+txtToBs txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte . ord) $ T.unpack txt
+
+updateDisplay :: Lcd -> [T.Text] -> IO ()
+updateDisplay lcd newTxt = do
+  oldBs <- readIORef (lcdLines lcd)
+  let newTxt' = ensureLength newTxt
+      newBs = map txtToBs newTxt'
+      spans = bytesToSpans oldBs newBs
+  forM_ spans $ \(line, col, bs) ->
+    lcdWrite (lcdCb lcd) (fromIntegral line) (fromIntegral col) bs
+  writeIORef (lcdLines lcd) newBs

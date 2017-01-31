@@ -55,6 +55,7 @@ executable pi-lcd
                      , LcdLowLevel
                      , Mcp23017
                      , PiLcd
+                     , UnicodeLcd
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -63,6 +64,7 @@ executable pi-lcd
   build-depends:       base >= 4.6 && < 5
                      , bytestring >= 0.10.0.2 && < 0.11
                      , clock >= 0.7.2 && < 0.8
+                     , text >= 1.1 && < 1.3
                      , unix >= 2.7 && < 2.8
 
   -- Directories containing source files.

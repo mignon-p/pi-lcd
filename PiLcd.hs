@@ -26,6 +26,7 @@ import System.Clock
 import I2C
 import LcdLowLevel
 import Mcp23017
+import UnicodeLcd
 
 data PiLcd =
   PiLcd
