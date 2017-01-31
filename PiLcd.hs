@@ -18,6 +18,7 @@ data PiLcd =
   { plExpander :: PortExpander
   }
 
+lcdAddr :: Int
 lcdAddr = 0x20
 
 data Color = Off | Red | Green | Blue | Cyan | Magenta | Yellow | White
@@ -44,9 +45,22 @@ colorValue Magenta = magenta
 colorValue Yellow  = yellow
 colorValue White   = white
 
+buttonMaskA :: Word8
+buttonMaskA = 0x1f
+
+buttonMask :: Word16
+buttonMask = fromIntegral buttonMaskA `shiftL` 8
+
+allBits :: Word16
+allBits = 0xffff
+
 mkPiLcd :: I2cHandle -> IO PiLcd
-mkPiLcd h =
-  PiLcd <$> mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
+mkPiLcd h = do
+  pe <- mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
+  writeIoDir pe buttonMask allBits
+  writeIPol  pe 0 allBits
+  writeGpPu  pe buttonMask allBits
+  return $ PiLcd pe
 
 getButtons :: PiLcd -> IO Word8
 getButtons lcd = readGpioA (plExpander lcd)

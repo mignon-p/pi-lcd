@@ -4,6 +4,7 @@ module Mcp23017
   , PortExpander
   , mkPortExpander
   , writeIoDir
+  , writeIPol
   , writeGpPu
   , writeGpio
   , readGpio
@@ -51,6 +52,7 @@ data PortExpander =
   { peRead  :: ReadFunc
   , peWrite :: WriteFunc
   , peIoDir :: IORef Word16
+  , peIPol  :: IORef Word16
   , peGpPu  :: IORef Word16
   , peOlat  :: IORef Word16
   }
@@ -80,9 +82,11 @@ modifyReg16 wf shadow reg bits mask = do
 mkPortExpander :: ReadFunc -> WriteFunc -> IO PortExpander
 mkPortExpander rf wf = do
   ioDir  <- readReg16 rf ioDirA
+  iPol   <- readReg16 rf iPolA
   gpPu   <- readReg16 rf gpPuA
   olat   <- readReg16 rf olatA
   rIoDir <- newIORef ioDir
+  rIPol  <- newIORef iPol
   rGpPu  <- newIORef gpPu
   rOlat  <- newIORef olat
   -- clear SEQOP bit, to enable sequential operation
@@ -93,6 +97,7 @@ mkPortExpander rf wf = do
     { peRead = rf
     , peWrite = wf
     , peIoDir = rIoDir
+    , peIPol = rIPol
     , peGpPu = rGpPu
     , peOlat = rOlat
     }
@@ -100,6 +105,10 @@ mkPortExpander rf wf = do
 writeIoDir :: PortExpander -> Word16 -> Word16 -> IO ()
 writeIoDir pe bits mask =
   modifyReg16 (peWrite pe) (peIoDir pe) ioDirA bits mask
+
+writeIPol :: PortExpander -> Word16 -> Word16 -> IO ()
+writeIPol pe bits mask =
+  modifyReg16 (peWrite pe) (peIPol pe) iPolA bits mask
 
 writeGpPu :: PortExpander -> Word16 -> Word16 -> IO ()
 writeGpPu pe bits mask =
