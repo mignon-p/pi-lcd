@@ -135,6 +135,7 @@ updateDisplay lcd newTxt = do
   let newTxt' = ensureLength newTxt
       newBs = map txtToBs newTxt'
       spans = bytesToSpans oldBs newBs
+  print newBs
   forM_ spans $ \(line, col, bs) ->
     lcdWrite (lcdCb lcd) (fromIntegral line) (fromIntegral col) bs
   writeIORef (lcdLines lcd) newBs
