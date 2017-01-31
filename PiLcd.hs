@@ -1,6 +1,8 @@
 module PiLcd
   ( PiLcd
   , Color(..)
+  , Button(..)
+  , ButtonDirection(..)
   , mkPiLcd
   , getButtons
   , buttonSelect
@@ -21,6 +23,7 @@ import Mcp23017
 data PiLcd =
   PiLcd
   { plExpander :: PortExpander
+  , plButtons  :: IORef Word8
   }
 
 lcdAddr :: Int
@@ -56,6 +59,15 @@ buttonMaskA = 0x1f
 buttonMask :: Word16
 buttonMask = fromIntegral buttonMaskA `shiftL` 8
 
+data Button = Select | Right | Down | Up | Left
+            deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
+data ButtonDirection = Press | Release
+                     deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
+data ButtonEvent = ButtonEvent Button ButtonDirection
+                 deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
 bitSelect, bitRight, bitDown, bitUp, bitLeft :: Int
 bitSelect = 0
 bitRight  = 1
@@ -79,12 +91,20 @@ mkPiLcd h = do
   writeIoDir pe buttonMask allBits
   writeIPol  pe 0 allBits
   writeGpPu  pe buttonMask allBits
-  return $ PiLcd pe
+  but <- newIORef 0
+  return $ PiLcd pe but
 
 getButtons :: PiLcd -> IO Word8
 getButtons lcd = do
   x <- readGpioA (plExpander lcd)
   return $ (x .&. buttonMaskA) `xor` buttonMaskA
+
+getButtonEvent :: PiLcd -> IO (Maybe ButtonEvent)
+getButtonEvent lcd = do
+  newButs <- getButtons
+  oldButs <- readIORef (plButtons lcd)
+  let changedButs = newButs `xor` oldButs
+      lsb = changedButs `xor` (changedButs .&. (changedButs - 1))
 
 setBacklightColor :: PiLcd -> Color -> IO ()
 setBacklightColor lcd c =
