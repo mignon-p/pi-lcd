@@ -1,5 +1,6 @@
 import Control.Monad
 import Data.Bits
+import qualified Data.Text as T
 import Data.Word
 import Text.Printf
 
@@ -17,7 +18,8 @@ printChanges lcd addr color = do
                            Release -> color
                     nc' = toEnum nc
                 setBacklightColor lcd nc'
-                putStrLn $ (show btn) ++ " " ++ (show nc')
+                let msg = (show btn) ++ " " ++ (show nc')
+                updateDisplay lcd [T.pack msg]
                 return nc
   printChanges lcd addr color'
 

@@ -1,6 +1,7 @@
 module UnicodeLcd
   ( Lcd
   , supportedChars
+  , mkLcd
   , updateDisplay
   ) where
 
@@ -137,3 +138,9 @@ updateDisplay lcd newTxt = do
   forM_ spans $ \(line, col, bs) ->
     lcdWrite (lcdCb lcd) (fromIntegral line) (fromIntegral col) bs
   writeIORef (lcdLines lcd) newBs
+
+mkLcd :: LcdCallbacks -> IO Lcd
+mkLcd cb = do
+  let ls = replicate numLines $ B.replicate numColumns 0x20
+  ref <- newIORef ls
+  return $ Lcd cb ref

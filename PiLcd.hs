@@ -13,6 +13,7 @@ module PiLcd
   , buttonLeft
   , getButtonEvent
   , setBacklightColor
+  , updateDisplay
   ) where
 
 import Control.Applicative
@@ -20,19 +21,21 @@ import Control.Concurrent
 import Control.Monad
 import Data.Bits
 import Data.IORef
+import qualified Data.Text as T
 import Data.Word
 import System.Clock
 
 import I2C
 import LcdLowLevel
 import Mcp23017
-import UnicodeLcd
+import qualified UnicodeLcd as U
 
 data PiLcd =
   PiLcd
   { plExpander :: PortExpander
   , plButtons  :: IORef Word8
   , plCallbacks :: LcdCallbacks
+  , plLcd       :: U.Lcd
   }
 
 lcdAddr :: Int
@@ -107,7 +110,8 @@ mkPiLcd h = do
   but <- newIORef 0
   let cb = mkCallbacks pe
   lcdInitialize cb
-  return $ PiLcd pe but cb
+  lcd <- U.mkLcd cb
+  return $ PiLcd pe but cb lcd
 
 getButtons :: PiLcd -> IO Word8
 getButtons lcd = do
@@ -194,3 +198,6 @@ mkCallbacks pe =
   , lcRecv = recvFunc pe
   , lcDelay = delayFunc
   }
+
+updateDisplay :: PiLcd -> [T.Text] -> IO ()
+updateDisplay lcd txt = U.updateDisplay (plLcd lcd) txt
