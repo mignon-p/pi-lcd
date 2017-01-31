@@ -4,6 +4,7 @@ module LcdLowLevel
   , lcdInitialize
   , lcdClear
   , lcdControl
+  , bitIf
   ) where
 
 import Control.Concurrent

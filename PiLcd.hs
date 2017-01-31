@@ -16,9 +16,12 @@ module PiLcd
   ) where
 
 import Control.Applicative
+import Control.Concurrent
+import Control.Monad
 import Data.Bits
 import Data.IORef
 import Data.Word
+import System.Clock
 
 import I2C
 import LcdLowLevel
@@ -28,6 +31,7 @@ data PiLcd =
   PiLcd
   { plExpander :: PortExpander
   , plButtons  :: IORef Word8
+  , plCallbacks :: LcdCallbacks
   }
 
 lcdAddr :: Int
@@ -95,11 +99,14 @@ allBits = 0xffff
 mkPiLcd :: I2cHandle -> IO PiLcd
 mkPiLcd h = do
   pe <- mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
-  writeIoDir pe buttonMask allBits
+  let outputs = white + 0xe0 -- rs, rw, e
+  writeIoDir pe (complement outputs) allBits
   writeIPol  pe 0 allBits
   writeGpPu  pe buttonMask allBits
   but <- newIORef 0
-  return $ PiLcd pe but
+  let cb = mkCallbacks pe
+  lcdInitialize cb
+  return $ PiLcd pe but cb
 
 getButtons :: PiLcd -> IO Word8
 getButtons lcd = do
@@ -129,3 +136,60 @@ getButtonEvent lcd = do
 setBacklightColor :: PiLcd -> Color -> IO ()
 setBacklightColor lcd c =
   writeGpio (plExpander lcd) (colorValue c `xor` white) white
+
+-- reverse the bits in a nibble
+reverseNibble :: Word8 -> Word8
+reverseNibble x =
+  -- https://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+  let x' = ((x `shiftR` 1) .&. 5) .|. ((x .&. 5) `shiftL` 1)
+  in ((x' `shiftR` 2) .&. 3) .|. ((x' .&. 3) `shiftL` 2)
+
+mkByte :: LcdBus -> Word8
+mkByte bus =
+  bitIf (lbRS bus) 7 +
+  bitIf (lbRW bus) 6 +
+  bitIf (lbE  bus) 5 +
+  case (lbDB bus) of
+    Nothing -> 0
+    (Just d) -> reverseNibble d `shiftL` 1
+
+sendFunc :: PortExpander -> LcdBus -> IO ()
+sendFunc pe bus = do
+  let b = mkByte bus
+  writeGpio pe (fromIntegral b) 0xfe
+  let dataBits = 0x1e
+      x = case (lbDB bus) of
+            Nothing -> dataBits
+            (Just _) -> 0
+  writeIoDir pe x dataBits
+
+recvFunc :: PortExpander -> IO Word8
+recvFunc pe = do
+  x <- readGpioB pe
+  return $ reverseNibble $ (x `shiftR` 1) .&. 0xf
+
+getNanos :: IO Integer
+getNanos = toNanoSecs <$> getTime Monotonic
+
+spin :: Int -> IO ()
+spin nanos = do
+  start <- getNanos
+  let end = start + fromIntegral nanos
+      sp = do
+        now <- getNanos
+        when (now < end) sp
+  sp
+
+delayFunc :: Int -> IO ()
+delayFunc nanos =
+  if nanos >= 10000
+  then threadDelay $ (nanos + 999) `div` 1000
+  else spin nanos
+
+mkCallbacks :: PortExpander -> LcdCallbacks
+mkCallbacks pe =
+  LcdCallbacks
+  { lcSend = sendFunc pe
+  , lcRecv = recvFunc pe
+  , lcDelay = delayFunc
+  }

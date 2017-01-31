@@ -60,7 +60,9 @@ executable pi-lcd
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.6 && <4.7, unix >=2.7 && <2.8
+  build-depends:       base >= 4.6 && < 5
+                     , clock >= 0.7.2 && < 0.8
+                     , unix >= 2.7 && < 2.8
 
   -- Directories containing source files.
   -- hs-source-dirs:
