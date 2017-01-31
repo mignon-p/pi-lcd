@@ -21,6 +21,7 @@ import Data.IORef
 import Data.Word
 
 import I2C
+import LcdLowLevel
 import Mcp23017
 
 data PiLcd =

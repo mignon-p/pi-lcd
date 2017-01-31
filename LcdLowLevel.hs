@@ -1,4 +1,15 @@
-module LcdLowLevel where
+module LcdLowLevel
+  ( LcdBus (..)
+  , LcdCallbacks (..)
+  , lcdInitialize
+  , lcdClear
+  , lcdControl
+  ) where
+
+import Control.Concurrent
+import Control.Monad
+import Data.Bits
+import Data.Word
 
 data LcdBus =
   LcdBus
@@ -11,8 +22,8 @@ data LcdBus =
 instReg = False
 dataReg = True
 
-write = False
-read  = True
+writeMode = False
+readMode  = True
 
 nanoseconds :: Int -> Int
 nanoseconds = id
@@ -21,7 +32,15 @@ microseconds :: Int -> Int
 microseconds = (* 1000)
 
 milliseconds :: Float -> Int
-milliseconds x = ceil (x * 1e6)
+milliseconds x = ceiling (x * 1e6)
+
+enableCycle = 500
+enableWidth = 230
+addrSetup = 40
+-- addrHold = 10
+-- dataSetup = 80
+-- dataHold = 10
+dataDelay = 160
 
 data LcdCallbacks =
   LcdCallbacks
@@ -30,11 +49,17 @@ data LcdCallbacks =
   , lcDelay :: Int -> IO () -- delay in nanoseconds
   }
 
+delayEnableLow1 cb = lcDelay cb addrSetup
+delayEnableHigh cb = lcDelay cb enableWidth
+delayEnableLow2 cb = lcDelay cb (enableCycle - enableWidth - addrSetup)
+delayEnableHigh1 cb = lcDelay cb dataDelay
+delayEnableHigh2 cb = lcDelay cb (enableWidth - dataDelay)
+
 write4 :: LcdCallbacks -> Bool -> Word8 -> IO ()
 write4 cb rs db = do
   let bus = LcdBus
             { lbRS = rs
-            , lbRW = write
+            , lbRW = writeMode
             , lbE = False
             , lbDB = Just db
             }
@@ -44,7 +69,7 @@ write4 cb rs db = do
   delayEnableHigh cb
   lcSend cb $ bus { lbE = False }
   delayEnableLow2 cb
-  lcSend cb $ bus { ldDB = Nothing }
+  lcSend cb $ bus { lbDB = Nothing }
 
 write8 :: LcdCallbacks -> Bool -> Word8 -> IO ()
 write8 cb rs db = do
@@ -55,17 +80,19 @@ read4 :: LcdCallbacks -> Bool -> IO Word8
 read4 cb rs = do
   let bus = LcdBus
             { lbRS = rs
-            , lbRW = read
+            , lbRW = readMode
             , lbE = False
             , lbDB = Nothing
             }
   lcSend cb $ bus { lbE = False }
   delayEnableLow1 cb
   lcSend cb $ bus { lbE = True }
-  delayFoo cb
+  delayEnableHigh1 cb
   d <- lcRecv cb
-  delayBar cb
+  delayEnableHigh2 cb
   lcSend cb $ bus { lbE = False }
+  delayEnableLow2 cb
+  return d
 
 read8 :: LcdCallbacks -> Bool -> IO Word8
 read8 cb rs = do
@@ -83,20 +110,39 @@ lcdInitialize cb = do
   write4 cb instReg 3
   write4 cb instReg 2
   busyWait cb
-  write8 cb instReg 0x23 -- 2 display lines
-  busyWait cb
-  lcdOff cb
+  doCmd cb 0x23 -- 2 display lines
+  lcdControl cb False False False -- display off
   lcdClear cb
-  write8 cb instReg 0x04 -- TODO: I/D and S
-  busyWait cb
-  lcdOn cb
+  lcdMode cb True False
+  lcdControl cb True False False -- display on
 
-lcdOff :: LcdCallbacks -> IO ()
-lcdOff cb = do
-  write8 cb instReg displayOff
+doCmd :: LcdCallbacks -> Word8 -> IO ()
+doCmd cb cmd = do
+  write8 cb instReg cmd
   busyWait cb
 
-lcdOn :: LcdCallbacks -> IO ()
-lcdOn cb = do
-  write8 cb instReg displayOn
-  busyWait cb
+busyWait :: LcdCallbacks -> IO ()
+busyWait cb = do
+  bfac <- read8 cb instReg
+  when (testBit bfac 7) $ do
+    yield
+    busyWait cb
+
+bitIf :: Bool -> Int -> Word8
+bitIf b n = if b then bit n else 0
+
+lcdClear :: LcdCallbacks -> IO ()
+lcdClear cb = doCmd cb (bit 0)
+
+lcdControl :: LcdCallbacks -> Bool -> Bool -> Bool -> IO ()
+lcdControl cb d c b =
+  doCmd cb (bit 3 +
+            bitIf d 2 +
+            bitIf c 1 +
+            bitIf b 0)
+
+lcdMode :: LcdCallbacks -> Bool -> Bool -> IO ()
+lcdMode cb id s =
+  doCmd cb (bit 2 +
+            bitIf id 1 +
+            bitIf id 0)
