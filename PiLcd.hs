@@ -10,11 +10,13 @@ module PiLcd
   , buttonDown
   , buttonUp
   , buttonLeft
+  , getButtonEvent
   , setBacklightColor
   ) where
 
 import Control.Applicative
 import Data.Bits
+import Data.IORef
 import Data.Word
 
 import I2C
@@ -59,14 +61,17 @@ buttonMaskA = 0x1f
 buttonMask :: Word16
 buttonMask = fromIntegral buttonMaskA `shiftL` 8
 
-data Button = Select | Right | Down | Up | Left
+data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
             deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
 data ButtonDirection = Press | Release
                      deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
 data ButtonEvent = ButtonEvent Button ButtonDirection
-                 deriving (Eq, Ord, Show, Read, Bounded, Enum)
+                 deriving (Eq, Ord, Show, Read)
+
+buttonList :: [Button]
+buttonList = [ButtonSelect, ButtonRight, ButtonDown, ButtonUp, ButtonLeft]
 
 bitSelect, bitRight, bitDown, bitUp, bitLeft :: Int
 bitSelect = 0
@@ -99,12 +104,25 @@ getButtons lcd = do
   x <- readGpioA (plExpander lcd)
   return $ (x .&. buttonMaskA) `xor` buttonMaskA
 
+findBit :: Word8 -> Int
+findBit b = f 0
+  where f n = if testBit b n
+              then n
+              else f (n + 1)
+
 getButtonEvent :: PiLcd -> IO (Maybe ButtonEvent)
 getButtonEvent lcd = do
-  newButs <- getButtons
+  newButs <- getButtons lcd
   oldButs <- readIORef (plButtons lcd)
   let changedButs = newButs `xor` oldButs
-      lsb = changedButs `xor` (changedButs .&. (changedButs - 1))
+  if changedButs == 0
+    then return Nothing
+    else do
+      let aBit = findBit changedButs
+          press = testBit newButs aBit
+      writeIORef (plButtons lcd) (oldButs `xor` bit aBit)
+      let dir = if press then Press else Release
+      return $ Just $ ButtonEvent (buttonList !! aBit) dir
 
 setBacklightColor :: PiLcd -> Color -> IO ()
 setBacklightColor lcd c =
