@@ -3,6 +3,11 @@ module PiLcd
   , Color(..)
   , mkPiLcd
   , getButtons
+  , buttonSelect
+  , buttonRight
+  , buttonDown
+  , buttonUp
+  , buttonLeft
   , setBacklightColor
   ) where
 
@@ -50,6 +55,20 @@ buttonMaskA = 0x1f
 
 buttonMask :: Word16
 buttonMask = fromIntegral buttonMaskA `shiftL` 8
+
+bitSelect, bitRight, bitDown, bitUp, bitLeft :: Int
+bitSelect = 0
+bitRight  = 1
+bitDown   = 2
+bitUp     = 3
+bitLeft   = 4
+
+buttonSelect, buttonRight, buttonDown, buttonUp, buttonLeft :: Word8
+buttonSelect = bit bitSelect
+buttonRight  = bit bitRight
+buttonDown   = bit bitDown
+buttonUp     = bit bitUp
+buttonLeft   = bit bitLeft
 
 allBits :: Word16
 allBits = 0xffff
