@@ -35,14 +35,14 @@ yellow  = red + green
 white   = red + green + blue
 
 colorValue :: Color -> Word16
-colorValue Off = off
-colorValue Red = red
-colorValue Green = green
-colorValue Blue = blue
-colorValue Cyan = cyan
+colorValue Off     = off
+colorValue Red     = red
+colorValue Green   = green
+colorValue Blue    = blue
+colorValue Cyan    = cyan
 colorValue Magenta = magenta
-colorValue Yellow = yellow
-colorValue White = white
+colorValue Yellow  = yellow
+colorValue White   = white
 
 mkPiLcd :: I2cHandle -> IO PiLcd
 mkPiLcd h =
@@ -52,4 +52,5 @@ getButtons :: PiLcd -> IO Word8
 getButtons lcd = readGpioA (plExpander lcd)
 
 setBacklightColor :: PiLcd -> Color -> IO ()
-setBacklightColor lcd c = writeGpio (plExpander lcd) (colorValue c) white
+setBacklightColor lcd c =
+  writeGpio (plExpander lcd) (colorValue c `xor` white) white

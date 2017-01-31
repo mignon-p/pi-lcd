@@ -67,7 +67,7 @@ readReg16 rf reg = word8sToWord16 <$> rf reg 2
 modifyReg16 :: WriteFunc -> IORef Word16 -> Word8 -> Word16 -> Word16 -> IO ()
 modifyReg16 wf shadow reg bits mask = do
   old16 <- readIORef shadow
-  let val = (old16 .&. mask) `xor` bits
+  let val = (old16 .&. complement mask) `xor` bits
       old8s@[o8a, o8b] = word16ToWord8s old16
       val8s@[v8a, v8b] = word16ToWord8s val
   case (o8a == v8a, o8b == v8b) of
