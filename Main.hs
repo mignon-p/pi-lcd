@@ -8,8 +8,7 @@ import PiLcd
 
 printChanges :: PiLcd -> Int -> Word8 -> Int -> IO ()
 printChanges lcd addr old color = do
-  b' <- getButtons lcd
-  let b = (b' .&. 0x1f) `xor` 0x1f
+  b <- getButtons lcd
   color' <- if b == old
             then return color
             else do

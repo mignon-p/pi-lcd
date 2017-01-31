@@ -63,7 +63,9 @@ mkPiLcd h = do
   return $ PiLcd pe
 
 getButtons :: PiLcd -> IO Word8
-getButtons lcd = readGpioA (plExpander lcd)
+getButtons lcd = do
+  x <- readGpioA (plExpander lcd)
+  return $ (x .&. buttonMaskA) `xor` buttonMaskA
 
 setBacklightColor :: PiLcd -> Color -> IO ()
 setBacklightColor lcd c =
