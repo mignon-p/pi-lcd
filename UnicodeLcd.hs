@@ -8,6 +8,7 @@ module UnicodeLcd
 import Control.Monad
 import Data.Char
 import qualified Data.ByteString as B
+import qualified Data.HashMap.Strict as H
 import Data.IORef
 import Data.List
 import Data.Maybe
@@ -22,6 +23,7 @@ data Lcd =
   , lcdLines :: IORef [B.ByteString]
   }
 
+{- sadly, this is the table for ROM A02, which we don't have :(
 table :: [(Int, Word8)]
 table =
   [ (0x25B6, 0x10)  -- ▶ BLACK RIGHT-POINTING TRIANGLE
@@ -76,15 +78,55 @@ table =
   , (0x2016, 0xa0)  -- ‖ DOUBLE VERTICAL LINE
   ]
 
+identityChars :: [Word8]
+identityChars = [0x20..0x7e] ++ [0xa1..0xff]
+-}
+
+-- table for ROM A00, which is much more limited than A02
+table :: [(Int, Word8)]
+table =
+  [ (0x00A5, 0x5c)  -- ¥ YEN SIGN
+  , (0x2192, 0x7e)  -- → RIGHTWARDS ARROW
+  , (0x2190, 0x7f)  -- ← LEFTWARDS ARROW
+  , (0x2219, 0xa5)  -- ∙ BULLET OPERATOR
+  , (0x2203, 0xd5)  -- ∃ THERE EXISTS
+  , (0x25A1, 0xdb)  -- □ WHITE SQUARE
+  , (0x00B0, 0xdf)  -- ° DEGREE SIGN
+  , (0x03B1, 0xe0)  -- α GREEK SMALL LETTER ALPHA
+  , (0x00E4, 0xe1)  -- ä LATIN SMALL LETTER A WITH DIAERESIS
+  , (0x03B2, 0xe2)  -- β GREEK SMALL LETTER BETA
+  , (0x03B5, 0xe3)  -- ε GREEK SMALL LETTER EPSILON
+  , (0x03BC, 0xe4)  -- μ GREEK SMALL LETTER MU
+  , (0x03C3, 0xe5)  -- σ GREEK SMALL LETTER SIGMA
+  , (0x03C1, 0xe6)  -- ρ GREEK SMALL LETTER RHO
+  , (0x221A, 0xe8)  -- √ SQUARE ROOT
+  , (0x00A2, 0xec)  -- ¢ CENT SIGN
+  , (0x00F6, 0xef)  -- ö LATIN SMALL LETTER O WITH DIAERESIS
+  , (0x0398, 0xf2)  -- Θ GREEK CAPITAL LETTER THETA
+  , (0x03A9, 0xf4)  -- Ω GREEK CAPITAL LETTER OMEGA
+  , (0x00FC, 0xf5)  -- ü LATIN SMALL LETTER U WITH DIAERESIS
+  , (0x03A3, 0xf6)  -- Σ GREEK CAPITAL LETTER SIGMA
+  , (0x03C0, 0xf7)  -- π GREEK SMALL LETTER PI
+  , (0x00F7, 0xfd)  -- ÷ DIVISION SIGN
+  , (0x25AE, 0xff)  -- ▮ BLACK VERTICAL RECTANGLE
+  ]
+
+identityChars :: [Word8]
+identityChars = [0x20..0x5b] ++ [0x5d..0x7d]
+
+fullTable :: [(Int, Word8)]
+fullTable = table ++ map f identityChars
+  where f c = (fromIntegral c, c)
+
+hashTable :: H.HashMap Int Word8
+hashTable = H.fromList fullTable
+
 supportedChars :: [Char]
 supportedChars =
-  map chr $ sort $ map fst table ++ [0x20..0x7e] ++ [0xa1..0xff]
+  map chr $ sort $ map fst fullTable
 
 unicodeToByte :: Int -> Maybe Word8
-unicodeToByte c =
-  if (c >= 0x20 && c <= 0x7e) || (c >= 0xa1 && c <= 0xff)
-  then Just $ fromIntegral c
-  else lookup c table
+unicodeToByte c = H.lookup c hashTable
 
 ff :: (Int, [(Int, Int)]) -> [Bool] -> (Int, [(Int, Int)])
 ff (len, spans) bools =
