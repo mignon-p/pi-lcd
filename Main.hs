@@ -30,7 +30,7 @@ main = do
   h <- i2cOpen 1
   lcd <- mkPiLcd h
   putStrLn "Hello, World!"
-  forM_ "¥→←∙∃□°αäβεμσρ√¢öΘΩüΣπ÷▮abcd" $ \c ->
+  forM_ "▶◀“”⏫⏬•⏎↑↓→←≤≥▲▼⌂♪♬♥" $ \c ->
     putStrLn $ unlines $ showCharacter c
   updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮"]
   printChanges lcd 0x20 0
