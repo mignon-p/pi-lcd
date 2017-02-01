@@ -72,7 +72,7 @@ showCharacter c =
        (Just ws) -> (info ++ ":") : map showLine ws
 
 showLine :: Word8 -> String
-showLine w = map f [4..0]
+showLine w = map f [4,3..0]
   where f x = case 1 .&. (w `shiftR` x) of
                 0 -> ' '
                 1 -> '*'
