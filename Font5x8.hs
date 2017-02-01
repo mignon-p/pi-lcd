@@ -11,6 +11,7 @@ import qualified Data.ByteString as B
 import Data.Char
 import Data.List
 import Data.Word
+import Debug.Trace
 import System.IO.Unsafe
 import Text.Printf
 
@@ -43,11 +44,12 @@ findCharacter c = do
 bSearch :: Int -> Int -> Int -> Maybe Int
 bSearch _ _ 0 = Nothing
 bSearch cc start len =
-  let mid = start + len `div` 2
+  let halfLen = len `div` 2
+      mid = start + halfLen
       c = fromIntegral $ getCharCode mid
   in if | cc == c -> Just mid
-        | cc < c -> bSearch cc start mid
-        | cc > c -> bSearch cc (start + mid + 1) (len - mid - 1)
+        | cc < c -> bSearch cc start halfLen
+        | cc > c -> bSearch cc (mid + 1) (len - halfLen - 1)
 
 getCharCode :: Int -> Word16
 getCharCode n = word8sToWord16 [getByte n 0, getByte n 1]

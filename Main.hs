@@ -29,7 +29,8 @@ printChanges lcd addr color = do
 main = do
   h <- i2cOpen 1
   lcd <- mkPiLcd h
-  forM_ "¥→←∙∃□°αäβεμσρ√¢öΘΩüΣπ÷▮" $ \c ->
+  putStrLn "Hello, World!"
+  forM_ "¥→←∙∃□°αäβεμσρ√¢öΘΩüΣπ÷▮abcd" $ \c ->
     putStrLn $ unlines $ showCharacter c
   updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮"]
   printChanges lcd 0x20 0
