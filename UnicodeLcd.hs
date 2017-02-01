@@ -21,6 +21,7 @@ data Lcd =
   Lcd
   { lcdCb :: LcdCallbacks
   , lcdLines :: IORef [B.ByteString]
+  , lcdCustom :: IORef (Integer, [(Char, Integer)])
   }
 
 {- sadly, this is the table for ROM A02, which we don't have :(
@@ -184,5 +185,7 @@ updateDisplay lcd newTxt = do
 mkLcd :: LcdCallbacks -> IO Lcd
 mkLcd cb = do
   let ls = replicate numLines $ B.replicate numColumns 0x20
+      nonChar = chr 0xffff -- a noncharacter according to Unicode standard
   ref <- newIORef ls
-  return $ Lcd cb ref
+  cust <- newIORef (0, replicate 8 (nonChar, 0))
+  return $ Lcd cb ref cust
