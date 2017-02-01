@@ -14,6 +14,7 @@ module PiLcd
   , getButtonEvent
   , setBacklightColor
   , updateDisplay
+  , plCallbacks
   ) where
 
 import Control.Applicative

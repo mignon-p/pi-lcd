@@ -7,6 +7,7 @@ module LcdLowLevel
   , lcdClear
   , lcdControl
   , lcdWrite
+  , lcdDefineChar
   , bitIf
   ) where
 
@@ -190,3 +191,14 @@ lcdRead cb line col len = do
     busyWait cb
     return d
   return $ B.pack ws
+
+lcdDefineChar :: LcdCallbacks -> Word8 -> [Word8] -> IO ()
+lcdDefineChar cb c bitmap = do
+  when (c >= 8) $
+    fail $ "lcdDefineChar: character must be between 0-7; got " ++ show c
+  let len = length bitmap
+  when (len /= 8) $
+    fail $ "lcdDefineChar: bitmap must have 8 elements; got " ++ show len
+  let pos = c * 8
+  doCmd cb (0x40 .|. pos)
+  forM_ bitmap $ \b -> doData cb b
