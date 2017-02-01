@@ -89,7 +89,7 @@ table =
   , (0x2192, 0x7e)  -- → RIGHTWARDS ARROW
   , (0x2190, 0x7f)  -- ← LEFTWARDS ARROW
   , (0x2219, 0xa5)  -- ∙ BULLET OPERATOR
-  , (0x2203, 0xd5)  -- ∃ THERE EXISTS
+  , (0x2203, 0xd6)  -- ∃ THERE EXISTS
   , (0x25A1, 0xdb)  -- □ WHITE SQUARE
   , (0x00B0, 0xdf)  -- ° DEGREE SIGN
   , (0x03B1, 0xe0)  -- α GREEK SMALL LETTER ALPHA

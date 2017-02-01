@@ -28,6 +28,6 @@ printChanges lcd addr color = do
 main = do
   h <- i2cOpen 1
   lcd <- mkPiLcd h
-  updateDisplay lcd ["Hello, \\~", "© 2017 Patrick P"]
+  updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮"]
   printChanges lcd 0x20 0
   i2cClose h
