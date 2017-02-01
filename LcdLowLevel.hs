@@ -122,7 +122,7 @@ lcdInitialize cb = do
 
   -- "lcdClear" seems to leave some black boxes in the first row,
   -- so let's really clear the display by writing spaces
-  let spaces = B.replicate 40 0x21
+  let spaces = B.pack [0x20..0x20+39]
   lcdWrite cb 0 0 spaces
   lcdWrite cb 1 0 spaces
   bs <- lcdRead cb 1 0 40
@@ -170,7 +170,7 @@ lcdMode :: LcdCallbacks -> Bool -> Bool -> IO ()
 lcdMode cb id s =
   doCmd cb (bit 2 +
             bitIf id 1 +
-            bitIf id 0)
+            bitIf s 0)
 
 lcdWrite :: LcdCallbacks -> Word8 -> Word8 -> B.ByteString -> IO ()
 lcdWrite cb line col bs = do
