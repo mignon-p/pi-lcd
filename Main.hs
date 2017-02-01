@@ -6,6 +6,7 @@ import qualified Data.Text as T
 import Data.Word
 import Text.Printf
 
+import Font5x8
 import I2C
 import PiLcd
 
@@ -28,6 +29,8 @@ printChanges lcd addr color = do
 main = do
   h <- i2cOpen 1
   lcd <- mkPiLcd h
+  forM_ "¥→←∙∃□°αäβεμσρ√¢öΘΩüΣπ÷▮" $ \c ->
+    putStrLn $ unlines $ showCharacter c
   updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮"]
   printChanges lcd 0x20 0
   i2cClose h
