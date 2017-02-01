@@ -39,7 +39,7 @@ findCharacter c = do
   let nChars = B.length font `div` bytesPerChar
       cc = ord c
   n <- bSearch cc 0 nChars
-  return $ map (getByte n) [2..bytesPerChar-1]
+  return $ map (getByte n) [bytesPerChar-1,bytesPerChar-2..2]
 
 bSearch :: Int -> Int -> Int -> Maybe Int
 bSearch _ _ 0 = Nothing
@@ -58,7 +58,7 @@ word8sToWord16 :: [Word8] -> Word16
 word8sToWord16 [b1, b2] = (fromIntegral b1 `shiftL` 8) .|. fromIntegral b2
 
 decodeCharacter :: [Word8] -> [Word8]
-decodeCharacter ws = map (extractByte ws) [0..7]
+decodeCharacter ws = map (extractByte ws) [7,6..0]
 
 extractByte :: [Word8] -> Int -> Word8
 extractByte ws x = foldl' f 0 ws
