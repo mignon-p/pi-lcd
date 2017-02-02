@@ -12,6 +12,7 @@ import qualified Data.HashMap.Strict as H
 import Data.IORef
 import Data.List
 import Data.Maybe
+import Data.Ord
 import qualified Data.Text as T
 import Data.Word
 
@@ -25,6 +26,8 @@ data Lcd =
   }
 
 type CustomInfo = (Integer, [(Char, Integer)])
+
+-- https://forums.adafruit.com/viewtopic.php?f=50&t=111019
 
 {- sadly, this is the table for ROM A02, which we don't have :(
 table :: [(Int, Word8)]
@@ -216,4 +219,13 @@ matchExistingChars cust chars =
 allocateCustomChars :: CustomInfo -> String -> CustomInfo
 allocateCustomChars ci chars =
   let (chars', available) = matchExistingChars (snd ci) chars
-  in undefined
+      available' = map fst $ sortBy (comparing snd) available
+      pairs = zip available' chars'
+      generation = 1 + (fst ci)
+      newStuff = zipWith replace [0..] (snd ci)
+      replace i old@(c, _) = case i `lookup` pairs of
+                               Nothing -> if c `elem` chars
+                                          then (c, generation)
+                                          else old
+                               (Just c') -> (c', generation)
+  in (generation, newStuff)
