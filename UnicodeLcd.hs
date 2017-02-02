@@ -239,6 +239,7 @@ writeCustomChars lcd chars = do
   ci <- readIORef ref
   let ci' = allocateCustomChars ci chars
       oldNew = zip3 [0..] (map fst $ snd ci) (map fst $ snd ci')
+  writeIORef ref ci'
   forM oldNew $ \(i, old, new) -> do
     when (old /= new) $ do
       let (Just cd) = getCharData lcd new -- this should be safe
