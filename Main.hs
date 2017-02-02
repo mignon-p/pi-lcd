@@ -9,7 +9,6 @@ import qualified Data.Text as T
 import Data.Word
 import Text.Printf
 
-import I2C
 import PiLcd
 
 printChanges :: PiLcd -> Int -> Int -> IO ()
@@ -43,9 +42,7 @@ myChar =
 main = do
   let codePoint = chr 0xf800
       customChars = [(codePoint, charFromAsciiArt myChar)]
-  h <- i2cOpen 1
-  lcd <- mkPiLcd h $ defaultLcdOptions { loCustomChars = customChars }
+  lcd <- mkPiLcd defaultLcdAddress $ defaultLcdOptions { loCustomChars = customChars }
   putStrLn "Hello, World!"
   updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮≤≥▲▼⌂♪♬" <> T.singleton codePoint]
   printChanges lcd 0x20 0
-  i2cClose h

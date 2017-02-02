@@ -1,5 +1,7 @@
 module PiLcd
   ( PiLcd
+  , LcdAddress(..)
+  , defaultLcdAddress
   , Color(..)
   , Button(..)
   , ButtonDirection(..)
@@ -42,8 +44,18 @@ data PiLcd =
   , plLcd       :: U.Lcd
   }
 
-lcdAddr :: Int
-lcdAddr = 0x20
+data LcdAddress =
+  LcdAddress
+  { laBus :: Int
+  , laAddr :: Int
+  } deriving (Eq, Ord, Show, Read)
+
+defaultLcdAddress :: LcdAddress
+defaultLcdAddress =
+  LcdAddress
+  { laBus = 1
+  , laAddr = 0x20
+  }
 
 data Color = Off | Red | Green | Blue | Cyan | Magenta | Yellow | White
   deriving (Eq, Ord, Show, Read, Bounded, Enum)
@@ -104,8 +116,10 @@ buttonLeft   = bit bitLeft
 allBits :: Word16
 allBits = 0xffff
 
-mkPiLcd :: I2cHandle -> LcdOptions -> IO PiLcd
-mkPiLcd h lo = do
+mkPiLcd :: LcdAddress -> LcdOptions -> IO PiLcd
+mkPiLcd la lo = do
+  let lcdAddr = laAddr la
+  h <- i2cOpen (laBus la)
   pe <- mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
   let outputs = white + 0xe0 -- rs, rw, e
   writeIoDir pe (complement outputs) allBits
