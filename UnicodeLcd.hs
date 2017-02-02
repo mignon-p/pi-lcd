@@ -217,7 +217,8 @@ txtToBs ce txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte ce) $ T.unpack txt
 
 updateDisplay :: Lcd -> [T.Text] -> IO ()
 updateDisplay lcd newText = do
-  cm <- writeCustomChars lcd $ concatMap T.unpack newText
+  let cc = getCustomChars lcd $ concatMap T.unpack newText
+  cm <- writeCustomChars lcd cc
   let ce = (lcdEncoding lcd) { ceCustomMapping = cm }
   updateDisplay' lcd ce newText
 
