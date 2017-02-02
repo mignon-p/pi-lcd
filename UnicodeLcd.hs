@@ -1,10 +1,13 @@
 module UnicodeLcd
   ( Lcd
-  , supportedChars
+  , LcdOptions(..)
+  , defaultLcdOptions
+  -- , supportedChars
   , mkLcd
   , updateDisplay
   ) where
 
+import Control.Arrow
 import Control.Monad
 import Data.Char
 import qualified Data.ByteString as B
@@ -23,15 +26,41 @@ data Lcd =
   { lcdCb :: LcdCallbacks
   , lcdLines :: IORef [B.ByteString]
   , lcdCustom :: IORef CustomInfo
+  , lcdEncoding :: CharEncoding
   }
 
 type CustomInfo = (Integer, [(Char, Integer)])
 
+data CharEncoding =
+  CharEncoding
+  { ceBuiltIn       :: EncodingHash
+  , ceCustom        :: [(Char, [Word8])]
+  , ceCustomMapping :: [Char]
+  }
+
+data LcdOptions =
+  LcdOptions
+  { loRomCode :: RomCode
+  , loCustomChars :: [(Char, [Word8])]
+  } deriving (Eq, Ord, Show, Read)
+
+defaultLcdOptions :: LcdOptions
+defaultLcdOptions =
+  LcdOptions
+  { loRomCode = RomA00
+  , loCustomChars = []
+  }
+
 -- https://forums.adafruit.com/viewtopic.php?f=50&t=111019
 
-{- sadly, this is the table for ROM A02, which we don't have :(
-table :: [(Int, Word8)]
-table =
+data RomCode = RomA00 | RomA02
+             deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
+type EncodingHash = H.HashMap Char Word8
+
+{- sadly, this is the table for ROM A02, which we don't have :( -}
+tableA02 :: [(Int, Word8)]
+tableA02 =
   [ (0x25B6, 0x10)  -- ▶ BLACK RIGHT-POINTING TRIANGLE
   , (0x25C0, 0x11)  -- ◀ BLACK LEFT-POINTING TRIANGLE
   , (0x201c, 0x12)  -- “ LEFT DOUBLE QUOTATION MARK
@@ -84,13 +113,12 @@ table =
   , (0x2016, 0xa0)  -- ‖ DOUBLE VERTICAL LINE
   ]
 
-identityChars :: [Word8]
-identityChars = [0x20..0x7e] ++ [0xa1..0xff]
--}
+hashA02 :: EncodingHash
+hashA02 = mkTable tableA02 $ [0x20..0x7e] ++ [0xa1..0xff]
 
 -- table for ROM A00, which is much more limited than A02
-table :: [(Int, Word8)]
-table =
+tableA00 :: [(Int, Word8)]
+tableA00 =
   [ (0x00A5, 0x5c)  -- ¥ YEN SIGN
   , (0x2192, 0x7e)  -- → RIGHTWARDS ARROW
   , (0x2190, 0x7f)  -- ← LEFTWARDS ARROW
@@ -117,22 +145,31 @@ table =
   , (0x25AE, 0xff)  -- ▮ BLACK VERTICAL RECTANGLE
   ]
 
-identityChars :: [Word8]
-identityChars = [0x20..0x5b] ++ [0x5d..0x7d]
+hashA00 :: EncodingHash
+hashA00 = mkTable tableA00 $ [0x20..0x5b] ++ [0x5d..0x7d]
 
-fullTable :: [(Int, Word8)]
-fullTable = table ++ map f identityChars
+hashTables :: [(RomCode, EncodingHash)]
+hashTables = [(RomA00, hashA00), (RomA02, hashA02)]
+
+mkTable :: [(Int, Word8)] -> [Word8] -> EncodingHash
+mkTable table identityChars =
+  H.fromList $ map (first ord) table ++ map f identityChars
   where f c = (fromIntegral c, c)
 
-hashTable :: H.HashMap Int Word8
-hashTable = H.fromList fullTable
-
+{-
 supportedChars :: [Char]
 supportedChars =
   map chr $ sort $ map fst fullTable
 
-unicodeToByte :: Int -> Maybe Word8
+unicodeToByte :: Char -> Maybe Word8
 unicodeToByte c = H.lookup c hashTable
+-}
+
+unicodeToByte :: CharEncoding -> Char -> Maybe Word8
+unicodeToByte ce c =
+  case c `elemIndex` ceCustomMapping ce of
+    (Just i) = Just (fromIntegral i)
+    Nothing -> H.lookup c (ceBuiltIn ce)
 
 ff :: (Int, [(Int, Int)]) -> [Bool] -> (Int, [(Int, Int)])
 ff (len, spans) bools =
@@ -174,35 +211,65 @@ ensureLength ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
     ensureCols t =
       T.take numColumns $ T.append t $ T.replicate numColumns $ T.singleton ' '
 
-txtToBs :: T.Text -> B.ByteString
-txtToBs txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte . ord) $ T.unpack txt
+txtToBs :: CharEncoding -> T.Text -> B.ByteString
+txtToBs ce txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte ce) $ T.unpack txt
 
 updateDisplay :: Lcd -> [T.Text] -> IO ()
-updateDisplay lcd newTxt = do
+updateDisplay lcd newText = do
+  cm <- writeCustomChars lcd $ concatMap T.unpack newText
+  let ce = (lcdEncoding lcd) { ceCustomMapping = cm }
+  updateDisplay' lcd ce newText
+
+updateDisplay' :: Lcd -> CharEncoding -> [T.Text] -> IO ()
+updateDisplay' lcd ce newTxt = do
   oldBs <- readIORef (lcdLines lcd)
   let newTxt' = ensureLength newTxt
-      newBs = map txtToBs newTxt'
+      newBs = map (txtToBs ce) newTxt'
       spans = bytesToSpans oldBs newBs
   forM_ spans $ \(line, col, bs) ->
     lcdWrite (lcdCb lcd) (fromIntegral line) (fromIntegral col) bs
   writeIORef (lcdLines lcd) newBs
 
-mkLcd :: LcdCallbacks -> IO Lcd
-mkLcd cb = do
+mkLcd :: LcdCallbacks -> LcdOptions -> IO Lcd
+mkLcd cb lo = do
   let ls = replicate numLines $ B.replicate numColumns 0x20
       nonChar = chr 0xffff -- a noncharacter according to Unicode standard
   ref <- newIORef ls
   cust <- newIORef (0, replicate 8 (nonChar, 0))
-  return $ Lcd cb ref cust
+  let builtIn = (loRomCode lo) `lookup` hashTables
+      ce = CharEncoding
+           { ceBuiltIn = builtIn
+           , ceCustom = loCustomChars lo
+           , ceCustomMapping = [] -- unused in this context
+           }
+  return $ Lcd cb ref cust ce
 
 data CharStatus = CharBuiltin | CharCustom | CharNotFound
                 deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
 getCharStatus :: Lcd -> Char -> CharStatus
-getCharStatus = undefined
+getCharStatus lcd c =
+  let ce = (lcdEncoding lcd)
+      user = c `lookup` (ceCustom ce)
+      builtIn = c `H.lookup` (ceBuiltIn ce)
+      inFont = getCharacter c
+  in case user of
+    (Just _) -> CharCustom
+    Nothing ->
+      case builtIn of
+        (Just _) -> CharBuiltin
+        Nothing ->
+          case inFont of
+            (Just _) -> CharCustom
+            Nothing -> CharNotFound
 
 getCharData :: Lcd -> Char -> Maybe [Word8]
-getCharData = undefined
+getCharData lcd c =
+  let ce = (lcdEncoding lcd)
+      user = c `lookup` (ceCustom ce)
+  in case user of
+    (Just _) -> user
+    Nothing -> getCharacter c
 
 getCustomChars :: Lcd -> String -> String
 getCustomChars lcd str =
@@ -233,7 +300,7 @@ allocateCustomChars ci chars =
                                (Just c') -> (c', generation)
   in (generation, newStuff)
 
-writeCustomChars :: Lcd -> String -> IO [(Int, Word8)]
+writeCustomChars :: Lcd -> String -> IO [Char]
 writeCustomChars lcd chars = do
   let ref = lcdCustom lcd
   ci <- readIORef ref
@@ -244,4 +311,4 @@ writeCustomChars lcd chars = do
     when (old /= new) $ do
       let (Just cd) = getCharData lcd new -- this should be safe
       lcdDefineChar (lcdCb lcd) i cd
-    return (ord new, i)
+    return new
