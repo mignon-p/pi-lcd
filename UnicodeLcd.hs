@@ -201,6 +201,9 @@ data CharStatus = CharBuiltin | CharCustom | CharNotFound
 getCharStatus :: Lcd -> Char -> CharStatus
 getCharStatus = undefined
 
+getCharData :: Lcd -> Char -> Maybe [Word8]
+getCharData = undefined
+
 getCustomChars :: Lcd -> String -> String
 getCustomChars lcd str =
   sort $ nub $ filter (\x -> getCharStatus lcd x == CharCustom) str
@@ -229,3 +232,15 @@ allocateCustomChars ci chars =
                                           else old
                                (Just c') -> (c', generation)
   in (generation, newStuff)
+
+writeCustomChars :: Lcd -> String -> IO [(Int, Word8)]
+writeCustomChars lcd chars = do
+  let ref = lcdCustom lcd
+  ci <- readIORef ref
+  let ci' = allocateCustomChars ci chars
+      oldNew = zip3 [0..] (map fst $ snd ci) (map fst $ snd ci')
+  forM oldNew $ \(i, old, new) -> do
+    when (old /= new) $ do
+      let (Just cd) = getCharData lcd new -- this should be safe
+      lcdDefineChar (lcdCb lcd) i cd
+    return (ord new, i)
