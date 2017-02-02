@@ -231,4 +231,5 @@ turnOffAndClosePiLcd lcd = do
   let cb = plCallbacks lcd
   lcdClear cb
   lcdControl cb False False False
+  setBacklightColor lcd Off
   closePiLcd lcd
