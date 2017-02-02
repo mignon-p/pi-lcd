@@ -19,6 +19,7 @@ import Data.Ord
 import qualified Data.Text as T
 import Data.Word
 
+import Font5x8
 import LcdLowLevel
 
 data Lcd =
@@ -153,8 +154,8 @@ hashTables = [(RomA00, hashA00), (RomA02, hashA02)]
 
 mkTable :: [(Int, Word8)] -> [Word8] -> EncodingHash
 mkTable table identityChars =
-  H.fromList $ map (first ord) table ++ map f identityChars
-  where f c = (fromIntegral c, c)
+  H.fromList $ map (first chr) table ++ map f identityChars
+  where f c = (chr $ fromIntegral c, c)
 
 {-
 supportedChars :: [Char]
@@ -168,7 +169,7 @@ unicodeToByte c = H.lookup c hashTable
 unicodeToByte :: CharEncoding -> Char -> Maybe Word8
 unicodeToByte ce c =
   case c `elemIndex` ceCustomMapping ce of
-    (Just i) = Just (fromIntegral i)
+    (Just i) -> Just (fromIntegral i)
     Nothing -> H.lookup c (ceBuiltIn ce)
 
 ff :: (Int, [(Int, Int)]) -> [Bool] -> (Int, [(Int, Int)])
@@ -236,7 +237,7 @@ mkLcd cb lo = do
       nonChar = chr 0xffff -- a noncharacter according to Unicode standard
   ref <- newIORef ls
   cust <- newIORef (0, replicate 8 (nonChar, 0))
-  let builtIn = (loRomCode lo) `lookup` hashTables
+  let (Just builtIn) = (loRomCode lo) `lookup` hashTables -- should be safe
       ce = CharEncoding
            { ceBuiltIn = builtIn
            , ceCustom = loCustomChars lo

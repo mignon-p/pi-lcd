@@ -111,7 +111,7 @@ mkPiLcd h = do
   but <- newIORef 0
   let cb = mkCallbacks pe
   lcdInitialize cb
-  lcd <- U.mkLcd cb
+  lcd <- U.mkLcd cb U.defaultLcdOptions
   return $ PiLcd pe but cb lcd
 
 getButtons :: PiLcd -> IO Word8
