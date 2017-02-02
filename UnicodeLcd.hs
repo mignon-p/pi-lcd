@@ -17,6 +17,7 @@ import qualified Data.HashMap.Strict as H
 import Data.IORef
 import Data.List
 import Data.Maybe
+import Data.Monoid
 import Data.Ord
 import qualified Data.Text as T
 import Data.Word
@@ -26,9 +27,10 @@ import LcdLowLevel
 
 data Lcd =
   Lcd
-  { lcdCb :: LcdCallbacks
-  , lcdLines :: IORef [B.ByteString]
-  , lcdCustom :: IORef CustomInfo
+  { lcdOptions  :: LcdOptions
+  , lcdCb       :: LcdCallbacks
+  , lcdLines    :: IORef [B.ByteString]
+  , lcdCustom   :: IORef CustomInfo
   , lcdEncoding :: CharEncoding
   }
 
@@ -43,14 +45,18 @@ data CharEncoding =
 
 data LcdOptions =
   LcdOptions
-  { loRomCode :: RomCode
+  { loLines :: Int
+  , loColumns :: Int
+  , loRomCode :: RomCode
   , loCustomChars :: [(Char, [Word8])]
   } deriving (Eq, Ord, Show, Read)
 
 defaultLcdOptions :: LcdOptions
 defaultLcdOptions =
   LcdOptions
-  { loRomCode = RomA00
+  { loLines = 2
+  , loColumns = 16
+  , loRomCode = RomA00
   , loCustomChars = []
   }
 
@@ -205,14 +211,16 @@ bytesToSpans old new =
       spans' = zipWith addLine spans [0..]
   in concat spans'
 
-numColumns = 16
-numLines = 2
+-- numColumns = 16
+-- numLines = 2
 
-ensureLength :: [T.Text] -> [T.Text]
-ensureLength ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
+ensureLength :: LcdOptions -> [T.Text] -> [T.Text]
+ensureLength lo ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
   where
     ensureCols t =
       T.take numColumns $ T.append t $ T.replicate numColumns $ T.singleton ' '
+    numLines = loLines lo
+    numColumns = loColumns lo
 
 txtToBs :: CharEncoding -> T.Text -> B.ByteString
 txtToBs ce txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte ce) $ T.unpack txt
@@ -227,16 +235,30 @@ updateDisplay lcd newText = do
 updateDisplay' :: Lcd -> CharEncoding -> [T.Text] -> IO ()
 updateDisplay' lcd ce newTxt = do
   oldBs <- readIORef (lcdLines lcd)
-  let newTxt' = ensureLength newTxt
+  let newTxt' = rearrange $ ensureLength (lcdOptions lcd) newTxt
       newBs = map (txtToBs ce) newTxt'
       spans = bytesToSpans oldBs newBs
   forM_ spans $ \(line, col, bs) ->
     lcdWrite (lcdCb lcd) (fromIntegral line) (fromIntegral col) bs
   writeIORef (lcdLines lcd) newBs
 
+-- Convert multiple lines to 2 or fewer lines.
+-- In a 4-line display, lines 1 and 3 are treated as a single line,
+-- and lines 2 and 4 are treated as a single line.
+rearrange :: Monoid a => [a] -> [a]
+rearrange [] = []
+rearrange [x] = [x]
+rearrange xs = [l1, l2]
+  where (l1, l2) = f xs
+        f [] = (mempty, mempty)
+        f [y] = (y, mempty)
+        f (y1:y2:rest) =
+          let (z1, z2) = f rest
+          in (y1 <> z2, y2 <> z2)
+
 mkLcd :: LcdCallbacks -> LcdOptions -> IO Lcd
 mkLcd cb lo = do
-  let ls = replicate numLines $ B.replicate numColumns 0x20
+  let ls = rearrange $ replicate (loLines lo) $ B.replicate (loColumns lo) 0x20
       nonChar = chr 0xffff -- a noncharacter according to Unicode standard
   ref <- newIORef ls
   cust <- newIORef (0, replicate 8 (nonChar, 0))
@@ -246,7 +268,7 @@ mkLcd cb lo = do
            , ceCustom = loCustomChars lo
            , ceCustomMapping = [] -- unused in this context
            }
-  return $ Lcd cb ref cust ce
+  return $ Lcd lo cb ref cust ce
 
 data CharStatus = CharBuiltin | CharCustom | CharNotFound
                 deriving (Eq, Ord, Show, Read, Bounded, Enum)
