@@ -21,10 +21,10 @@ data Lcd =
   Lcd
   { lcdCb :: LcdCallbacks
   , lcdLines :: IORef [B.ByteString]
-  , lcdCustom :: IORef CustomInfo)
+  , lcdCustom :: IORef CustomInfo
   }
 
-type CustomInfo = (Integer, [(Char, Integer)]
+type CustomInfo = (Integer, [(Char, Integer)])
 
 {- sadly, this is the table for ROM A02, which we don't have :(
 table :: [(Int, Word8)]
@@ -193,8 +193,10 @@ mkLcd cb = do
   return $ Lcd cb ref cust
 
 data CharStatus = CharBuiltin | CharCustom | CharNotFound
+                deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
 getCharStatus :: Lcd -> Char -> CharStatus
+getCharStatus = undefined
 
 getCustomChars :: Lcd -> String -> String
 getCustomChars lcd str =
@@ -202,8 +204,16 @@ getCustomChars lcd str =
 
 matchExistingChars :: [(Char, Integer)] -> String -> (String, [(Int, Integer)])
 matchExistingChars cust chars =
-  let pairs = zip [0..] TODO
+  let pairs = zip [0..] cust
+      existing = map fst cust
+      common = existing `intersect` chars
+      chars' = chars \\ common
+      pairs' = filter ff pairs
+      ff (_, (c, _)) = c `notElem` common
+      f (pos, (_, generation)) = (pos, generation)
+  in (chars', map f pairs')
 
 allocateCustomChars :: CustomInfo -> String -> CustomInfo
 allocateCustomChars ci chars =
   let (chars', available) = matchExistingChars (snd ci) chars
+  in undefined
