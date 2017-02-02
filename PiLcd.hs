@@ -6,7 +6,7 @@ module PiLcd
   , Button(..)
   , ButtonDirection(..)
   , ButtonEvent(..)
-  , mkPiLcd
+  , openPiLcd
   , getButtons
   , buttonSelect
   , buttonRight
@@ -16,6 +16,8 @@ module PiLcd
   , getButtonEvent
   , setBacklightColor
   , updateDisplay
+  , closePiLcd
+  , turnOffAndClosePiLcd
   , charFromAsciiArt
   , LcdOptions(..)
   , defaultLcdOptions
@@ -38,8 +40,9 @@ import UnicodeLcd (charFromAsciiArt, LcdOptions(..), defaultLcdOptions)
 
 data PiLcd =
   PiLcd
-  { plExpander :: PortExpander
-  , plButtons  :: IORef Word8
+  { plHandle    :: I2cHandle
+  , plExpander  :: PortExpander
+  , plButtons   :: IORef Word8
   , plCallbacks :: LcdCallbacks
   , plLcd       :: U.Lcd
   }
@@ -116,8 +119,8 @@ buttonLeft   = bit bitLeft
 allBits :: Word16
 allBits = 0xffff
 
-mkPiLcd :: LcdAddress -> LcdOptions -> IO PiLcd
-mkPiLcd la lo = do
+openPiLcd :: LcdAddress -> LcdOptions -> IO PiLcd
+openPiLcd la lo = do
   let lcdAddr = laAddr la
   h <- i2cOpen (laBus la)
   pe <- mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
@@ -129,7 +132,7 @@ mkPiLcd la lo = do
   let cb = mkCallbacks pe
   lcdInitialize cb
   lcd <- U.mkLcd cb lo
-  return $ PiLcd pe but cb lcd
+  return $ PiLcd h pe but cb lcd
 
 getButtons :: PiLcd -> IO Word8
 getButtons lcd = do
@@ -219,3 +222,13 @@ mkCallbacks pe =
 
 updateDisplay :: PiLcd -> [T.Text] -> IO ()
 updateDisplay lcd txt = U.updateDisplay (plLcd lcd) txt
+
+closePiLcd :: PiLcd -> IO ()
+closePiLcd lcd = i2cClose (plHandle lcd)
+
+turnOffAndClosePiLcd :: PiLcd -> IO ()
+turnOffAndClosePiLcd lcd = do
+  let cb = plCallbacks lcd
+  lcdClear cb
+  lcdControl cb False False False
+  closePiLcd lcd

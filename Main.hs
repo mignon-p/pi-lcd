@@ -42,7 +42,7 @@ myChar =
 main = do
   let codePoint = chr 0xf800
       customChars = [(codePoint, charFromAsciiArt myChar)]
-  lcd <- mkPiLcd defaultLcdAddress $ defaultLcdOptions { loCustomChars = customChars }
+  lcd <- openPiLcd defaultLcdAddress $ defaultLcdOptions { loCustomChars = customChars }
   putStrLn "Hello, World!"
   updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮≤≥▲▼⌂♪♬" <> T.singleton codePoint]
   printChanges lcd 0x20 0
