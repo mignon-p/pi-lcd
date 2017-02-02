@@ -14,7 +14,9 @@ module PiLcd
   , getButtonEvent
   , setBacklightColor
   , updateDisplay
-  , plCallbacks
+  , charFromAsciiArt
+  , LcdOptions(..)
+  , defaultLcdOptions
   ) where
 
 import Control.Applicative
@@ -30,6 +32,7 @@ import I2C
 import LcdLowLevel
 import Mcp23017
 import qualified UnicodeLcd as U
+import UnicodeLcd (charFromAsciiArt, LcdOptions(..), defaultLcdOptions)
 
 data PiLcd =
   PiLcd
@@ -101,8 +104,8 @@ buttonLeft   = bit bitLeft
 allBits :: Word16
 allBits = 0xffff
 
-mkPiLcd :: I2cHandle -> IO PiLcd
-mkPiLcd h = do
+mkPiLcd :: I2cHandle -> LcdOptions -> IO PiLcd
+mkPiLcd h lo = do
   pe <- mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
   let outputs = white + 0xe0 -- rs, rw, e
   writeIoDir pe (complement outputs) allBits
@@ -111,7 +114,7 @@ mkPiLcd h = do
   but <- newIORef 0
   let cb = mkCallbacks pe
   lcdInitialize cb
-  lcd <- U.mkLcd cb U.defaultLcdOptions
+  lcd <- U.mkLcd cb lo
   return $ PiLcd pe but cb lcd
 
 getButtons :: PiLcd -> IO Word8

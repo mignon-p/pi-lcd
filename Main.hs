@@ -3,6 +3,8 @@
 import Control.Monad
 import Data.Bits
 import qualified Data.ByteString as B
+import Data.Char
+import Data.Monoid
 import qualified Data.Text as T
 import Data.Word
 import Text.Printf
@@ -26,10 +28,24 @@ printChanges lcd addr color = do
                 return nc
   printChanges lcd addr color'
 
+myChar :: [String]
+myChar =
+  [ "*****"
+  , "*  **"
+  , "* * *"
+  , "*  **"
+  , "* ***"
+  , "* ***"
+  , "* ***"
+  , "*****"
+  ]
+
 main = do
+  let codePoint = chr 0xf800
+      customChars = [(codePoint, charFromAsciiArt myChar)]
   h <- i2cOpen 1
-  lcd <- mkPiLcd h
+  lcd <- mkPiLcd h $ defaultLcdOptions { loCustomChars = customChars }
   putStrLn "Hello, World!"
-  updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮≤≥▲▼⌂♪♬♥"]
+  updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮≤≥▲▼⌂♪♬" <> T.singleton codePoint]
   printChanges lcd 0x20 0
   i2cClose h
