@@ -2,7 +2,6 @@
 
 import Control.Monad
 import Data.Bits
-import qualified Data.ByteString as B
 import Data.Char
 import Data.Monoid
 import qualified Data.Text as T

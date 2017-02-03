@@ -46,12 +46,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 
-executable pi-lcd
-  -- .hs or .lhs file containing the Main module.
-  main-is:             Main.hs
-
-  -- Modules included in this executable, other than Main.
-  other-modules:       System.Hardware.PiLcd
+library
+  exposed-modules:     System.Hardware.PiLcd
                      , System.Hardware.PiLcd.Font5x8
                      , System.Hardware.PiLcd.Hd44780
                      , System.Hardware.PiLcd.I2c
@@ -70,10 +66,26 @@ executable pi-lcd
                      , unordered-containers >= 0.2.4 && < 0.3
 
   -- Directories containing source files.
-  hs-source-dirs:      ., src
+  hs-source-dirs:      src
 
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
   build-tools:         hsc2hs
+
+  -- Base language which the package is written in.
+  default-language:    Haskell2010
+
+
+executable pi-lcd-demo
+  -- .hs or .lhs file containing the Main module.
+  main-is:             Main.hs
+
+  -- Other library packages from which modules are imported.
+  build-depends:       base >= 4.6 && < 5
+                     , pi-lcd
+                     , text >= 1.1 && < 1.3
+
+  -- Directories containing source files.
+  hs-source-dirs:      .
 
   -- Base language which the package is written in.
   default-language:    Haskell2010
