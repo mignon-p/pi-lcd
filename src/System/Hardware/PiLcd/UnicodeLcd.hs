@@ -3,6 +3,7 @@ module System.Hardware.PiLcd.UnicodeLcd
   , LcdOptions(..)
   , defaultLcdOptions
   -- , supportedChars
+  , getCharStatus
   , mkLcd
   , updateDisplay
   , charFromAsciiArt
@@ -164,14 +165,7 @@ mkTable table identityChars =
   H.fromList $ map (first chr) table ++ map f identityChars
   where f c = (chr $ fromIntegral c, c)
 
-{-
-supportedChars :: [Char]
-supportedChars =
-  map chr $ sort $ map fst fullTable
-
-unicodeToByte :: Char -> Maybe Word8
-unicodeToByte c = H.lookup c hashTable
--}
+-- supportedChars :: Lcd -> [(Char, CharStatus)]
 
 unicodeToByte :: CharEncoding -> Char -> Maybe Word8
 unicodeToByte ce c =
@@ -198,7 +192,7 @@ findSpans old new =
   let bitMap = zipWith (==) (B.unpack old) (B.unpack new)
       grp = group bitMap
       pairs = snd $ foldl' ff (0, []) grp
-  in map (extractBytes new) pairs
+  in sort $ map (extractBytes new) pairs
 
 addLine :: [(Int, B.ByteString)] -> Int -> [(Int, Int, B.ByteString)]
 addLine spans line = map f spans
@@ -209,9 +203,6 @@ bytesToSpans old new =
   let spans = zipWith findSpans old new
       spans' = zipWith addLine spans [0..]
   in concat spans'
-
--- numColumns = 16
--- numLines = 2
 
 ensureLength :: LcdOptions -> [T.Text] -> [T.Text]
 ensureLength lo ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
