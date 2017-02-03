@@ -75,7 +75,7 @@ tableA00 =
   , (0x2190, 0x7f)  -- ← LEFTWARDS ARROW
   , (0x2219, 0xa5)  -- ∙ BULLET OPERATOR
   , (0x2203, 0xd6)  -- ∃ THERE EXISTS
-  , (0x25A1, 0xdb)  -- □ WHITE SQUARE
+  , (0x25AF, 0xdb)  -- ▯ WHITE VERTICAL RECTANGLE
   , (0x00B0, 0xdf)  -- ° DEGREE SIGN
   , (0x03B1, 0xe0)  -- α GREEK SMALL LETTER ALPHA
   , (0x00E4, 0xe1)  -- ä LATIN SMALL LETTER A WITH DIAERESIS
@@ -93,7 +93,7 @@ tableA00 =
   , (0x03A3, 0xf6)  -- Σ GREEK CAPITAL LETTER SIGMA
   , (0x03C0, 0xf7)  -- π GREEK SMALL LETTER PI
   , (0x00F7, 0xfd)  -- ÷ DIVISION SIGN
-  , (0x25AE, 0xff)  -- ▮ BLACK VERTICAL RECTANGLE
+  , (0x2588, 0xff)  -- █ FULL BLOCK
   ]
 
 hashA00 :: EncodingHash
