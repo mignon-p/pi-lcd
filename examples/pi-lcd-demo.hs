@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- a demo of buttons and backlight colors
+
+import Control.Exception
 import Control.Monad
 import Data.Bits
 import Data.Char
@@ -21,27 +24,14 @@ printChanges lcd addr color = do
                            Release -> color
                     nc' = toEnum nc
                 setBacklightColor lcd nc'
-                let msg = [(drop 6 $ show but) ++ " " ++ (show dir), (show nc')]
+                let msg = ["“" ++ (drop 6 $ show but) ++ "” " ++ (show dir), (show nc')]
                 updateDisplay lcd $ map T.pack msg
                 return nc
   printChanges lcd addr color'
 
-myChar :: [String]
-myChar =
-  [ "*****"
-  , "*  **"
-  , "* * *"
-  , "*  **"
-  , "* ***"
-  , "* ***"
-  , "* ***"
-  , "*****"
-  ]
-
 main = do
-  let codePoint = chr 0xf800
-      customChars = [(codePoint, charFromAsciiArt myChar)]
-  lcd <- openPiLcd defaultLcdAddress $ defaultLcdOptions { loCustomChars = customChars }
-  putStrLn "Hello, World!"
-  updateDisplay lcd ["¥→←∙∃□°αäβεμσρ√¢", "öΘΩüΣπ÷▮≤≥▲▼⌂♪♬" <> T.singleton codePoint]
-  printChanges lcd 0x20 0
+  bracket (openPiLcd defaultLcdAddress $ defaultLcdOptions) turnOffAndClosePiLcd
+  $ \lcd -> do
+    putStrLn "Press Control-C to exit"
+    updateDisplay lcd ["Press buttons...", ""]
+    printChanges lcd 0x20 0
