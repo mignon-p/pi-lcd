@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiWayIf #-}
 
-module Font5x8
+module System.Hardware.PiLcd.Font5x8
   ( getCharacter
   , showCharacter
   ) where

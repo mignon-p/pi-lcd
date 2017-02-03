@@ -1,4 +1,4 @@
-module Mcp23017
+module System.Hardware.PiLcd.Mcp23017
   ( ReadFunc
   , WriteFunc
   , PortExpander

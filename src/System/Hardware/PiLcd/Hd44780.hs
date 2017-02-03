@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module LcdLowLevel
+module System.Hardware.PiLcd.Hd44780
   ( LcdBus (..)
   , LcdCallbacks (..)
   , lcdInitialize

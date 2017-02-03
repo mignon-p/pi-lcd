@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module I2C
+module System.Hardware.PiLcd.I2c
   ( I2cHandle
   , Segment (..)
   , i2cOpen

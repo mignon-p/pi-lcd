@@ -9,7 +9,7 @@ import qualified Data.Text as T
 import Data.Word
 import Text.Printf
 
-import PiLcd
+import System.Hardware.PiLcd
 
 printChanges :: PiLcd -> Int -> Int -> IO ()
 printChanges lcd addr color = do

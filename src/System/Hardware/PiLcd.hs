@@ -1,4 +1,4 @@
-module PiLcd
+module System.Hardware.PiLcd
   ( PiLcd
   , LcdAddress(..)
   , defaultLcdAddress
@@ -32,11 +32,12 @@ import qualified Data.Text as T
 import Data.Word
 import System.Clock
 
-import I2C
-import LcdLowLevel
-import Mcp23017
-import qualified UnicodeLcd as U
-import UnicodeLcd (charFromAsciiArt, LcdOptions(..), defaultLcdOptions)
+import System.Hardware.PiLcd.I2c
+import System.Hardware.PiLcd.Hd44780
+import System.Hardware.PiLcd.Mcp23017
+import qualified System.Hardware.PiLcd.UnicodeLcd as U
+import System.Hardware.PiLcd.UnicodeLcd
+  (charFromAsciiArt, LcdOptions(..), defaultLcdOptions)
 
 data PiLcd =
   PiLcd

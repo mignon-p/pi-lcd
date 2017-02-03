@@ -1,4 +1,4 @@
-module UnicodeLcd
+module System.Hardware.PiLcd.UnicodeLcd
   ( Lcd
   , LcdOptions(..)
   , defaultLcdOptions
@@ -22,8 +22,8 @@ import Data.Ord
 import qualified Data.Text as T
 import Data.Word
 
-import Font5x8
-import LcdLowLevel
+import System.Hardware.PiLcd.Font5x8
+import System.Hardware.PiLcd.Hd44780
 
 data Lcd =
   Lcd
