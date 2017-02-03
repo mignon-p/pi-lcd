@@ -45,6 +45,10 @@ build-type:          Simple
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.10
 
+data-files:          5x8.lcd
+
+data-dir:            data
+
 
 library
   exposed-modules:     System.Hardware.PiLcd
@@ -53,6 +57,8 @@ library
                      , System.Hardware.PiLcd.I2c
                      , System.Hardware.PiLcd.Mcp23017
                      , System.Hardware.PiLcd.UnicodeLcd
+
+  other-modules:       Paths_pi_lcd
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:

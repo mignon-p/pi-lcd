@@ -15,9 +15,12 @@ import Debug.Trace
 import System.IO.Unsafe
 import Text.Printf
 
+import Paths_pi_lcd
+
 font :: B.ByteString
 font = unsafePerformIO $ do
-  e <- try $ B.readFile "5x8.lcd"
+  path <- getDataFileName "5x8.lcd"
+  e <- try $ B.readFile path
   case e of
     (Left exc) -> handleExc exc
     (Right bs) -> return bs
