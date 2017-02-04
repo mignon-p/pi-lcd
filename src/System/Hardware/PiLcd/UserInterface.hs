@@ -68,8 +68,19 @@ renderUi dat st columns =
   in [T.Take columns lstLine, scrollButtons columns btnLine]
 
 mkButtons :: [T.Text] -> Int -> T.Text
+mkButtons buttons idx =
+  let f n = if | n == idx -> '▶'
+               | n == idx + 1 -> '◀'
+               | otherwise -> ' '
+      between = map f [0..]
+      buttons' = buttons ++ [T.empty]
+      xs = zipWith T.append between buttons'
+  in T.concat xs
 
 expandButtons :: Int -> T.Text -> T.Text
+expandButtons columns txt =
+  let spans = groupBy gf txt
+      gf c1 c2 = undefined
 
 scrollButtons :: Int -> T.Text -> T.Text
 
