@@ -64,25 +64,47 @@ renderUi dat st columns =
                   [] -> T.empty
                   [x] -> x
                   _ -> '↕' `T.cons` (lst !! (usList st))
-      btnLine = expandButtons columns $ mkButtons (udButtons dat) (usButtons st)
-  in [T.Take columns lstLine, scrollButtons columns btnLine]
+      cc = arrows (usInternal st)
+      btns = renderButtons cc (usButtons st) (mkButtons (udButtons dat) columns) 0
+  in [T.Take columns lstLine, scrollButtons btns columns]
 
-mkButtons :: [T.Text] -> Int -> T.Text
-mkButtons buttons idx =
-  let f n = if | n == idx -> '▶'
-               | n == idx + 1 -> '◀'
-               | otherwise -> ' '
-      between = map f [0..]
-      buttons' = buttons ++ [T.empty]
-      xs = zipWith T.append between buttons'
-  in T.concat xs
+arrows :: InternalState -> (Char, Char)
+arrows BeforeSelect = ('▶', '◀')
+arrows DuringSelect = ('▷', '◁')
+arrows AfterSelect  = (' ', ' ')
 
-expandButtons :: Int -> T.Text -> T.Text
-expandButtons columns txt =
-  let spans = groupBy gf txt
-      gf c1 c2 = undefined
+mkButtons :: [T.Text] -> Int -> [(Int, T.Text)]
+mkButtons buttons columns =
+  let haveColumns = sum $ map T.length buttons
+      needColumns = columns - haveColumns
+  in expandButtons (buttons ++ [T.empty]) needColumns
 
-scrollButtons :: Int -> T.Text -> T.Text
+expandButtons :: [T.Text] -> Int -> [(Int, T.Text)]
+expandButtons [] _ = []
+expandButtons buttons@(bt:bts) needColumns =
+  let nButtons = length buttons
+      nSpaces = max 1 (needColumns `div` nButtons)
+  in (nSpace, bt) : expandButtons bts (needColumns - nSpaces)
+
+renderButtons :: (Char, Char) -> Int -> [(Int, T.Text)] -> Int -> (Int, Int, T.Text)
+renderButtons _ _ [] _ -> T.empty
+renderButtons cs@(c1, c2) idx ((nSpaces, txt):bts) len =
+  let l1 = len + nSpaces
+      l2 = l1 + T.length txt
+      (b, e, rest) = renderButtons cs (idx - 1) bts l2
+      spaces = T.replicate (nSpaces - 1) ' '
+  in case idx of
+       0    -> (l1, l2, T.concat [spaces, T.singleton c1,  txt, rest])
+       (-1) -> (b,  e,  T.concat [T.singleton c2,  spaces, txt, rest])
+       _    -> (b,  e,  T.concat [T.singleton ' ', spaces, txt, rest])
+
+scrollButtons :: (Int, Int, T.Text) -> Int -> T.Text
+scrollButtons (b, e, txt) columns =
+  let mid = (b + e) `div` 2
+      txtLen = T.length txt
+      startCol = mid - (columns `div` 2)
+      startCol' = max 0 $ min (txtLen - columns) startCol
+  in T.take columns $ T.drop startCol' txt
 
 noAfter :: UiState -> UiState
 noAfter st@(UiState { usInternal = AfterSelect }) =
