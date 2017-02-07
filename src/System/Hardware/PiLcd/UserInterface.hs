@@ -1,5 +1,9 @@
 module System.Hardware.PiLcd.UserInterface where
 
+import qualified Data.Text as T
+
+import System.Hardware.PiLcd
+
 data UiData =
   UiData
   { udList    :: [T.Text]
@@ -40,14 +44,20 @@ runUi dat st mbe columns =
       ls = renderUi dat st'' columns
   in (ls, noAfter st'', done)
 
-updateState :: UiState -> ButtonEvent -> UiState
-updateState st (ButtonEvent ButtonSelect Press) = st { usInternal = DuringSelect }
-updateState st (ButtonEvent ButtonSelect Release) = st { usInternal = AfterSelect }
-updateState st (ButtonEvent ButtonUp    Press) = moveList    st (-1)
-updateState st (ButtonEvent ButtonDown  Press) = moveList    st   1
-updateState st (ButtonEvent ButtonLeft  Press) = moveButtons st (-1)
-updateState st (ButtonEvent ButtonRight Press) = moveButtons st   1
-updateState st _ = st
+updateState :: UiState -> ButtonEvent -> (UiState, Bool)
+updateState st (ButtonEvent ButtonSelect Press) = (st { usInternal = DuringSelect }, False)
+updateState st (ButtonEvent ButtonSelect Release) = (st { usInternal = AfterSelect }, True)
+updateState st (ButtonEvent ButtonUp    Press) = (moveList    st (-1), False)
+updateState st (ButtonEvent ButtonDown  Press) = (moveList    st   1 , False)
+updateState st (ButtonEvent ButtonLeft  Press) = (moveButtons st (-1), False)
+updateState st (ButtonEvent ButtonRight Press) = (moveButtons st   1 , False)
+updateState st _ = (st, False)
+
+moveList :: UiState -> Int -> UiState
+moveList st n = st { usList = usList st + n }
+
+moveButtons :: UiState -> Int -> UiState
+moveButtons st n = st { usButtons = usButtons st + n }
 
 sanitizeState :: UiData -> UiState -> UiState
 sanitizeState dat st =
@@ -66,7 +76,7 @@ renderUi dat st columns =
                   _ -> '↕' `T.cons` (lst !! (usList st))
       cc = arrows (usInternal st)
       btns = renderButtons cc (usButtons st) (mkButtons (udButtons dat) columns) 0
-  in [T.Take columns lstLine, scrollButtons btns columns]
+  in [T.take columns lstLine, scrollButtons btns columns]
 
 arrows :: InternalState -> (Char, Char)
 arrows BeforeSelect = ('▶', '◀')
@@ -84,15 +94,15 @@ expandButtons [] _ = []
 expandButtons buttons@(bt:bts) needColumns =
   let nButtons = length buttons
       nSpaces = max 1 (needColumns `div` nButtons)
-  in (nSpace, bt) : expandButtons bts (needColumns - nSpaces)
+  in (nSpaces, bt) : expandButtons bts (needColumns - nSpaces)
 
 renderButtons :: (Char, Char) -> Int -> [(Int, T.Text)] -> Int -> (Int, Int, T.Text)
-renderButtons _ _ [] _ -> T.empty
+renderButtons _ _ [] _ = (0, 0, T.empty)
 renderButtons cs@(c1, c2) idx ((nSpaces, txt):bts) len =
   let l1 = len + nSpaces
       l2 = l1 + T.length txt
       (b, e, rest) = renderButtons cs (idx - 1) bts l2
-      spaces = T.replicate (nSpaces - 1) ' '
+      spaces = T.replicate (nSpaces - 1) (T.singleton ' ')
   in case idx of
        0    -> (l1, l2, T.concat [spaces, T.singleton c1,  txt, rest])
        (-1) -> (b,  e,  T.concat [T.singleton c2,  spaces, txt, rest])

@@ -57,6 +57,7 @@ library
                      , System.Hardware.PiLcd.I2c
                      , System.Hardware.PiLcd.Mcp23017
                      , System.Hardware.PiLcd.UnicodeLcd
+                     , System.Hardware.PiLcd.UserInterface
 
   other-modules:       Paths_pi_lcd
 
