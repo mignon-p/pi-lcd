@@ -1,3 +1,17 @@
+{-|
+Module      : System.Hardware.PiLcd
+Description : Control an Adafruit character LCD and keypad kit
+Copyright   : © Patrick Pelletier, 2017
+License     : BSD3
+Maintainer  : code@funwithsoftware.org
+Stability   : experimental
+Portability : Linux
+
+This module contains everything you need to use an
+<https://www.adafruit.com/categories/808 Adafruit character LCD and keypad kit>
+from Haskell.
+-}
+
 module System.Hardware.PiLcd
   ( PiLcd
   , LcdAddress(..)
@@ -55,6 +69,7 @@ import System.Hardware.PiLcd.UserInterface
    UiData(..), UiState(..), InternalState, defaultUiState)
 import System.Hardware.PiLcd.Util
 
+-- | An opaque type representing an LCD and keypad kit.
 data PiLcd =
   PiLcd
   { plHandle    :: I2cHandle
@@ -64,12 +79,20 @@ data PiLcd =
   , plLcd       :: U.Lcd
   }
 
+-- | Specifies how to connect to the LCD+keypad kit.  'laBus' should be 1 for
+-- revision 2 Raspberry Pis and later.  For revision 1 Pis (those with 256 MB
+-- of RAM), the bus should be 0.  If you need a way to automatically detect
+-- this, consider using the @piBoardRev@ function in the
+-- <https://hackage.haskell.org/package/wiringPi wiringPi package>.
+-- On the other hand, there is not much reason to ever change
+-- 'laAddr' from the default 0x20.
 data LcdAddress =
   LcdAddress
-  { laBus :: Int
-  , laAddr :: Int
+  { laBus :: Int  -- ^ The I2C bus to communicate on
+  , laAddr :: Int -- ^ The address on that bus to find the LCD+keypad kit
   } deriving (Eq, Ord, Show, Read)
 
+-- | Default values for 'LcdAddress'.  Defaults to bus 1 and address 0x20.
 defaultLcdAddress :: LcdAddress
 defaultLcdAddress =
   LcdAddress
@@ -77,6 +100,8 @@ defaultLcdAddress =
   , laAddr = 0x20
   }
 
+-- | Colors for the LED backlight.  If you have a single-color
+-- backlight, just use 'Off' and 'White' to turn it off and on.
 data Color = Off | Red | Green | Blue | Cyan | Magenta | Yellow | White
   deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
@@ -127,6 +152,8 @@ buttonLeft   = bit bitLeft
 allBits :: Word16
 allBits = 0xffff
 
+-- | Opens the LCD+keypad kit, at the specified address, with the
+-- specified options.
 openPiLcd :: LcdAddress -> LcdOptions -> IO PiLcd
 openPiLcd la lo = do
   let lcdAddr = laAddr la
@@ -142,6 +169,9 @@ openPiLcd la lo = do
   lcd <- U.mkLcd cb lo
   return $ PiLcd h pe but cb lcd
 
+-- | Returns all of the buttons which are currently depressed, as a
+-- bitwise \"or\" of 'buttonSelect', 'buttonRight', 'buttonDown',
+-- 'buttonUp', and 'buttonLeft'.
 getButtons :: PiLcd -> IO Word8
 getButtons lcd = do
   x <- readGpioA (plExpander lcd)
@@ -153,6 +183,9 @@ findBit b = f 0
               then n
               else f (n + 1)
 
+-- | If a button has been pressed or released since the last call to
+-- 'getButtonEvent', returns information on that press or release as
+-- a 'ButtonEvent'.
 getButtonEvent :: PiLcd -> IO (Maybe ButtonEvent)
 getButtonEvent lcd = do
   newButs <- getButtons lcd
@@ -167,6 +200,9 @@ getButtonEvent lcd = do
       let dir = if press then Press else Release
       return $ Just $ ButtonEvent (buttonList !! aBit) dir
 
+-- | Set the LED backlight to one of the eight possible 'Color' values.
+-- If you have a single-color backlight, just use 'Off' and 'White' to
+-- turn it off and on.
 setBacklightColor :: PiLcd -> Color -> IO ()
 setBacklightColor lcd c =
   writeGpio (plExpander lcd) (colorValue c `xor` white) white
@@ -228,12 +264,23 @@ mkCallbacks pe =
   , lcDelay = delayFunc
   }
 
+-- | Update the display to contain the specified lines
+-- of text.  This is done intelligently; i. e. only the
+-- characters which have changed are rewritten.
+-- The lines are truncated or padded with spaces to make
+-- them the width of the display.  Similarly, the list
+-- of lines is truncated or padded with blank lines to
+-- make it the height of the display.
 updateDisplay :: PiLcd -> [T.Text] -> IO ()
 updateDisplay lcd txt = U.updateDisplay (plLcd lcd) txt
 
+-- | Closes the 'PiLcd', leaving the display contents and
+-- backlight setting untouched.
 closePiLcd :: PiLcd -> IO ()
 closePiLcd lcd = i2cClose (plHandle lcd)
 
+-- | Like 'closePiLcd', but clears the display, turns off the
+-- display, and turns off the backlight before closing the 'PiLcd'.
 turnOffAndClosePiLcd :: PiLcd -> IO ()
 turnOffAndClosePiLcd lcd = do
   let cb = plCallbacks lcd
