@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiWayIf #-}
-
 module System.Hardware.PiLcd.UserInterface
   ( Button(..)
   , ButtonDirection(..)
@@ -13,6 +11,8 @@ module System.Hardware.PiLcd.UserInterface
 
 import Data.Monoid
 import qualified Data.Text as T
+
+import System.Hardware.PiLcd.Util
 
 data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
             deriving (Eq, Ord, Show, Read, Bounded, Enum)
@@ -85,13 +85,6 @@ sanitizeState dat st =
       sList    = (usList st)    `mod` nList
       sButtons = (usButtons st) `mod` nButtons
   in st { usList = sList, usButtons = sButtons }
-
-padLine :: Int -> T.Text -> T.Text
-padLine columns txt =
-  let len = T.length txt
-  in if | len < columns -> txt <> T.replicate (columns - len) (T.singleton ' ')
-        | len > columns -> T.take columns txt
-        | otherwise -> txt
 
 renderUi :: UiData -> UiState -> Int -> [T.Text]
 renderUi dat st columns =

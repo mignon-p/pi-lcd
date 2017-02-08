@@ -60,6 +60,7 @@ library
                      , System.Hardware.PiLcd.UserInterface
 
   other-modules:       Paths_pi_lcd
+                     , System.Hardware.PiLcd.Util
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:

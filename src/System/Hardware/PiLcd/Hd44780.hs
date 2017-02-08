@@ -8,7 +8,6 @@ module System.Hardware.PiLcd.Hd44780
   , lcdControl
   , lcdWrite
   , lcdDefineChar
-  , bitIf
   ) where
 
 import Control.Concurrent
@@ -16,6 +15,8 @@ import Control.Monad
 import Data.Bits
 import qualified Data.ByteString as B
 import Data.Word
+
+import System.Hardware.PiLcd.Util
 
 data LcdBus =
   LcdBus
@@ -153,9 +154,6 @@ busyWait cb = do
   when (testBit bfac 7) $ do
     yield
     busyWait cb
-
-bitIf :: Bool -> Int -> Word8
-bitIf b n = if b then bit n else 0
 
 lcdClear :: LcdCallbacks -> IO ()
 lcdClear cb = doCmd cb (bit 0)

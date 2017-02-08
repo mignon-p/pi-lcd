@@ -49,6 +49,7 @@ import qualified System.Hardware.PiLcd.UserInterface as UI
 import System.Hardware.PiLcd.UserInterface
   (Button(..), ButtonDirection(..), ButtonEvent(..),
    UiData(..), UiState(..), InternalState, defaultUiState)
+import System.Hardware.PiLcd.Util
 
 data PiLcd =
   PiLcd
