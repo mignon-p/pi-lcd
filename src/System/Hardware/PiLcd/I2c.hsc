@@ -21,7 +21,6 @@ import Foreign.Ptr
 import Foreign.Storable
 import System.Posix.IO
 import System.Posix.Types
--- import Text.Printf
 
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
@@ -134,13 +133,7 @@ i2cReadReg h addr reg len = do
   [r] <- i2cTransaction h addr [Write [reg], Read len]
   return r
 
-{-
-hex :: Word8 -> String
-hex b = printf "%02x" b
--}
-
 i2cWriteReg :: I2cHandle -> Int -> Word8 -> [Word8] -> IO ()
 i2cWriteReg h addr reg d = do
-  -- putStrLn $ "reg " ++ hex reg ++ " " ++ show (map hex d)
   i2cTransaction h addr [Write (reg:d)]
   return ()
