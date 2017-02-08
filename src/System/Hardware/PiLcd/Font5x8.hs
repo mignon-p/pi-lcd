@@ -3,6 +3,7 @@
 module System.Hardware.PiLcd.Font5x8
   ( getCharacter
   , showCharacter
+  , inverseUpDownArrow
   ) where
 
 import Control.Exception
@@ -35,7 +36,13 @@ getByte :: Int -> Int -> Word8
 getByte n i = B.index font (n * bytesPerChar + i)
 
 getCharacter :: Char -> Maybe [Word8]
-getCharacter c = fmap decodeCharacter $ findCharacter c
+getCharacter c =
+  case c `lookup` extraChars of
+    (Just x) -> x
+    Nothing -> getCharacter' c
+
+getCharacter' :: Char -> Maybe [Word8]
+getCharacter' c = fmap decodeCharacter $ findCharacter c
 
 findCharacter :: Char -> Maybe [Word8]
 findCharacter c = do
@@ -79,3 +86,13 @@ showLine w = map f [4,3..0]
   where f x = case 1 .&. (w `shiftR` x) of
                 0 -> ' '
                 1 -> '*'
+
+invertCharacter :: [Word8] -> [Word8]
+invertCharacter = map (xor 0x1f)
+
+inverseUpDownArrow :: Char
+inverseUpDownArrow = chr 0x10FFFD
+
+extraChars :: [(Char, Maybe [Word8])]
+extraChars =
+  [ ( inverseUpDownArrow , fmap invertCharacter $ getCharacter' '↕' ) ]

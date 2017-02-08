@@ -11,6 +11,8 @@ module System.Hardware.PiLcd.UserInterface
 
 import qualified Data.Text as T
 
+import System.Hardware.PiLcd.Font5x8
+
 data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
             deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
@@ -89,7 +91,7 @@ renderUi dat st columns =
       lstLine = case lst of
                   [] -> T.empty
                   [x] -> x
-                  _ -> '↕' `T.cons` (lst !! (usList st))
+                  _ -> inverseUpDownArrow `T.cons` (lst !! (usList st))
       cc = arrows (usInternal st)
       btns = renderButtons cc (usButtons st) (mkButtons (udButtons dat) columns) 0
   in [T.take columns lstLine, scrollButtons btns columns]
