@@ -1,3 +1,25 @@
+{-|
+Module      : System.Hardware.PiLcd.UnicodeLcd
+Description : Display Unicode characters on an LCD
+Copyright   : © Patrick Pelletier, 2017
+License     : BSD3
+Maintainer  : code@funwithsoftware.org
+
+Displays Unicode text on an LCD.  Only updates the parts
+of the LCD which have changed.  Automatically manages
+custom characters, using the
+<https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html 5x8 fixed font>
+for characters which are not built-in to the the LCD controller's ROM.
+Only eight distinct non-built-in characters can be on the display
+at any one time.
+
+Only supports characters which are made up of a single code point.
+(In other words, combining marks are not supported.)  If your input
+contains decomposed characters, consider using the
+<https://hackage.haskell.org/package/unicode-transforms unicode-transforms>
+package to convert to Normalization Form C.
+-}
+
 module System.Hardware.PiLcd.UnicodeLcd
   ( Lcd
   , LcdOptions(..)
@@ -27,9 +49,10 @@ import System.Hardware.PiLcd.Font5x8
 import System.Hardware.PiLcd.Hd44780
 import System.Hardware.PiLcd.Util
 
+-- | An opaque type representing an LCD.
 data Lcd =
   Lcd
-  { lcdOptions  :: LcdOptions
+  { lcdOptions  :: LcdOptions  -- ^ Returns the 'LcdOptions' that were passed to 'mkLcd'
   , lcdCb       :: LcdCallbacks
   , lcdLines    :: IORef [B.ByteString]
   , lcdCustom   :: IORef CustomInfo

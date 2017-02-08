@@ -2,6 +2,23 @@
 
 {-# LANGUAGE MultiWayIf #-}
 
+{-
+Converts the file 5x8.bdf (available from
+https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html) to a more compact
+binary representation.  Expects the file "5x8.bdf" to be in the current
+directory, and writes the output file to "5x8.lcd" in the current
+directory.
+
+The 5x8.lcd file is a compact binary representation produced from the
+original 5x8.bdf file.  Each character in 5x8.lcd takes up seven bytes.
+The first two bytes are the Unicode code point, in big-endian order.
+(The font only contains characters from the Basic Multilingual Plane, so
+only two bytes are needed.)  The next five bytes are the bitmap data
+for the glyph.  The glyph is stored "sideways", so that only five bytes
+are needed instead of eight.  The characters must be sorted in ascending
+order by code point, so that it is possible to binary search the file.
+-}
+
 import Data.Bits
 import qualified Data.ByteString as B
 import Data.Char
