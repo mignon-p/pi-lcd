@@ -13,8 +13,8 @@ import Text.Printf
 
 import System.Hardware.PiLcd
 
-printChanges :: PiLcd -> Int -> Int -> IO ()
-printChanges lcd addr color = do
+printChanges :: PiLcd -> Int -> IO ()
+printChanges lcd color = do
   b <- getButtonEvent lcd
   color' <- case b of
               Nothing -> return color
@@ -27,11 +27,11 @@ printChanges lcd addr color = do
                 let msg = ["“" ++ (drop 6 $ show but) ++ "” " ++ (show dir), (show nc')]
                 updateDisplay lcd $ map T.pack msg
                 return nc
-  printChanges lcd addr color'
+  printChanges lcd color'
 
 main =
   bracket (openPiLcd defaultLcdAddress $ defaultLcdOptions) turnOffAndClosePiLcd
   $ \lcd -> do
     putStrLn "Press Control-C to exit"
     updateDisplay lcd ["Press buttons...", ""]
-    printChanges lcd 0x20 0
+    printChanges lcd 0
