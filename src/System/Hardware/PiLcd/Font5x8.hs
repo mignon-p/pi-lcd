@@ -4,7 +4,6 @@ module System.Hardware.PiLcd.Font5x8
   ( getCharacter
   , showCharacter
   , charFromAsciiArt
-  , bigUpDownArrow
   ) where
 
 import Control.Exception
@@ -95,13 +94,11 @@ charFromAsciiArt ls = map f ls
                                            ' ' -> 0
                                            _   -> 1
 
-bigUpDownArrow :: Char
-bigUpDownArrow = chr 0x10FFFD
-
 extraChars :: [(Char, [Word8])]
 extraChars =
-  [ ( bigUpDownArrow
+  [ ( '↕'
     , charFromAsciiArt
+      -- this one has bigger arrowheads than the one in the font
       [ "  *  "
       , " *** "
       , "* * *"

@@ -88,9 +88,6 @@ sanitizeState dat st =
       sButtons = (usButtons st) `mod` nButtons
   in st { usList = sList, usButtons = sButtons }
 
-verticalArrow :: T.Text
-verticalArrow = T.singleton bigUpDownArrow
-
 padLine :: Int -> T.Text -> T.Text
 padLine columns txt =
   let len = T.length txt
@@ -104,7 +101,7 @@ renderUi dat st columns =
       lstLine = case lst of
                   [] -> T.empty
                   [x] -> x
-                  _ -> padLine (columns - 1) (lst !! (usList st)) <> verticalArrow
+                  _ -> padLine (columns - 1) (lst !! (usList st)) `T.snoc` '↕'
       cc = arrows (usInternal st)
       btns = renderButtons cc (usButtons st) (mkButtons (udButtons dat) columns) 0
   in [lstLine, scrollButtons btns columns]
