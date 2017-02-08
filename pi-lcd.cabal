@@ -112,3 +112,19 @@ executable pi-lcd-custom
 
   -- Base language which the package is written in.
   default-language:    Haskell2010
+
+
+executable pi-lcd-ui
+  -- .hs or .lhs file containing the Main module.
+  main-is:             pi-lcd-ui.hs
+
+  -- Other library packages from which modules are imported.
+  build-depends:       base >= 4.6 && < 5
+                     , pi-lcd
+                     , text >= 1.1 && < 1.3
+
+  -- Directories containing source files.
+  hs-source-dirs:      examples
+
+  -- Base language which the package is written in.
+  default-language:    Haskell2010

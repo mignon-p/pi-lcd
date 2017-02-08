@@ -5,6 +5,7 @@ module System.Hardware.PiLcd.UnicodeLcd
   -- , supportedChars
   , getCharStatus
   , mkLcd
+  , lcdOptions
   , updateDisplay
   , charFromAsciiArt
   ) where

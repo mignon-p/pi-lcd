@@ -21,6 +21,12 @@ module System.Hardware.PiLcd
   , charFromAsciiArt
   , LcdOptions(..)
   , defaultLcdOptions
+  , UiData(..)
+  , UiState(..)
+  , InternalState
+  , defaultUiState
+  , runUi
+  , runUiUntilDone
   ) where
 
 import Control.Applicative
@@ -38,6 +44,10 @@ import System.Hardware.PiLcd.Mcp23017
 import qualified System.Hardware.PiLcd.UnicodeLcd as U
 import System.Hardware.PiLcd.UnicodeLcd
   (charFromAsciiArt, LcdOptions(..), defaultLcdOptions)
+import qualified System.Hardware.PiLcd.UserInterface as UI
+import System.Hardware.PiLcd.UserInterface
+  (Button(..), ButtonDirection(..), ButtonEvent(..),
+   UiData(..), UiState(..), InternalState, defaultUiState)
 
 data PiLcd =
   PiLcd
@@ -90,15 +100,6 @@ buttonMaskA = 0x1f
 
 buttonMask :: Word16
 buttonMask = fromIntegral buttonMaskA `shiftL` 8
-
-data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
-            deriving (Eq, Ord, Show, Read, Bounded, Enum)
-
-data ButtonDirection = Press | Release
-                     deriving (Eq, Ord, Show, Read, Bounded, Enum)
-
-data ButtonEvent = ButtonEvent Button ButtonDirection
-                 deriving (Eq, Ord, Show, Read)
 
 buttonList :: [Button]
 buttonList = [ButtonSelect, ButtonRight, ButtonDown, ButtonUp, ButtonLeft]
@@ -234,3 +235,26 @@ turnOffAndClosePiLcd lcd = do
   lcdControl cb False False False
   setBacklightColor lcd Off
   closePiLcd lcd
+
+runUi :: PiLcd
+      -> UiData
+      -> UiState
+      -> IO (UiState, Bool)
+runUi lcd dat st = do
+  mbe <- getButtonEvent lcd
+  let columns = loColumns $ U.lcdOptions $ plLcd lcd
+      (ls, st', done) = UI.runUi dat st mbe columns
+  updateDisplay lcd ls
+  return (st', done)
+
+runUiUntilDone :: PiLcd
+               -> UiData
+               -> UiState
+               -> IO UiState
+runUiUntilDone lcd dat st = do
+  (st', done) <- runUi lcd dat st
+  if done
+    then return st'
+    else do
+    threadDelay 20000
+    runUiUntilDone lcd dat st'

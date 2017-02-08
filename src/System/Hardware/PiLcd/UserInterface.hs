@@ -1,8 +1,24 @@
-module System.Hardware.PiLcd.UserInterface where
+module System.Hardware.PiLcd.UserInterface
+  ( Button(..)
+  , ButtonDirection(..)
+  , ButtonEvent(..)
+  , UiData(..)
+  , UiState(..)
+  , InternalState
+  , defaultUiState
+  , runUi
+  ) where
 
 import qualified Data.Text as T
 
-import System.Hardware.PiLcd
+data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
+            deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
+data ButtonDirection = Press | Release
+                     deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
+data ButtonEvent = ButtonEvent Button ButtonDirection
+                 deriving (Eq, Ord, Show, Read)
 
 data UiData =
   UiData
