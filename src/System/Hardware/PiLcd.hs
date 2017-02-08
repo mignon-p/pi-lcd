@@ -38,12 +38,13 @@ import qualified Data.Text as T
 import Data.Word
 import System.Clock
 
-import System.Hardware.PiLcd.I2c
+import System.Hardware.PiLcd.Font5x8
 import System.Hardware.PiLcd.Hd44780
+import System.Hardware.PiLcd.I2c
 import System.Hardware.PiLcd.Mcp23017
 import qualified System.Hardware.PiLcd.UnicodeLcd as U
 import System.Hardware.PiLcd.UnicodeLcd
-  (charFromAsciiArt, LcdOptions(..), defaultLcdOptions)
+  (LcdOptions(..), defaultLcdOptions)
 import qualified System.Hardware.PiLcd.UserInterface as UI
 import System.Hardware.PiLcd.UserInterface
   (Button(..), ButtonDirection(..), ButtonEvent(..),

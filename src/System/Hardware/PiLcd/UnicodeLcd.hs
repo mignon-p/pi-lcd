@@ -7,7 +7,6 @@ module System.Hardware.PiLcd.UnicodeLcd
   , mkLcd
   , lcdOptions
   , updateDisplay
-  , charFromAsciiArt
   ) where
 
 import Control.Arrow
@@ -329,10 +328,3 @@ writeCustomChars lcd chars = do
       let (Just cd) = getCharData lcd new -- this should be safe
       lcdDefineChar (lcdCb lcd) i cd
     return new
-
-charFromAsciiArt :: [String] -> [Word8]
-charFromAsciiArt ls = map f ls
-  where f s = foldl' g 0 s
-        g accum c = (accum `shiftL` 1) + case c of
-                                           ' ' -> 0
-                                           _   -> 1

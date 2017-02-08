@@ -89,7 +89,7 @@ sanitizeState dat st =
   in st { usList = sList, usButtons = sButtons }
 
 verticalArrow :: T.Text
-verticalArrow = T.singleton inverseUpDownArrow
+verticalArrow = T.singleton bigUpDownArrow
 
 padLine :: Int -> T.Text -> T.Text
 padLine columns txt =
