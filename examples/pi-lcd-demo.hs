@@ -29,7 +29,7 @@ printChanges lcd addr color = do
                 return nc
   printChanges lcd addr color'
 
-main = do
+main =
   bracket (openPiLcd defaultLcdAddress $ defaultLcdOptions) turnOffAndClosePiLcd
   $ \lcd -> do
     putStrLn "Press Control-C to exit"

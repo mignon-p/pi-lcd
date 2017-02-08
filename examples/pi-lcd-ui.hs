@@ -6,6 +6,7 @@ import qualified Data.Text as T
 
 import Control.Exception
 import Data.Monoid
+
 import System.Hardware.PiLcd
 
 bandNames :: [T.Text]
@@ -26,7 +27,7 @@ uiData =
   , udButtons = ["OK", "Cancel"]
   }
 
-main = do
+main =
   bracket (openPiLcd defaultLcdAddress $ defaultLcdOptions) closePiLcd
   $ \lcd -> do
     setBacklightColor lcd Blue
