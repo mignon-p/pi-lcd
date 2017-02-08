@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiWayIf #-}
+
 module System.Hardware.PiLcd.UserInterface
   ( Button(..)
   , ButtonDirection(..)
@@ -9,6 +11,7 @@ module System.Hardware.PiLcd.UserInterface
   , runUi
   ) where
 
+import Data.Monoid
 import qualified Data.Text as T
 
 import System.Hardware.PiLcd.Font5x8
@@ -85,16 +88,26 @@ sanitizeState dat st =
       sButtons = (usButtons st) `mod` nButtons
   in st { usList = sList, usButtons = sButtons }
 
+verticalArrow :: T.Text
+verticalArrow = T.singleton inverseUpDownArrow
+
+padLine :: Int -> T.Text -> T.Text
+padLine columns txt =
+  let len = T.length txt
+  in if | len < columns -> txt <> T.replicate (columns - len) (T.singleton ' ')
+        | len > columns -> T.take columns txt
+        | otherwise -> txt
+
 renderUi :: UiData -> UiState -> Int -> [T.Text]
 renderUi dat st columns =
   let lst = udList dat
       lstLine = case lst of
                   [] -> T.empty
                   [x] -> x
-                  _ -> inverseUpDownArrow `T.cons` (lst !! (usList st))
+                  _ -> padLine (columns - 1) (lst !! (usList st)) <> verticalArrow
       cc = arrows (usInternal st)
       btns = renderButtons cc (usButtons st) (mkButtons (udButtons dat) columns) 0
-  in [T.take columns lstLine, scrollButtons btns columns]
+  in [lstLine, scrollButtons btns columns]
 
 arrows :: InternalState -> (Char, Char)
 arrows BeforeSelect = ('▶', '◀')
