@@ -35,6 +35,7 @@ import System.IO.Unsafe
 import Text.Printf
 
 import Paths_pi_lcd
+import System.Hardware.PiLcd.Util
 
 {-
 The 5x8.lcd file is a compact binary representation produced from the
@@ -98,9 +99,6 @@ bSearch cc start len =
 
 getCharCode :: Int -> Word16
 getCharCode n = word8sToWord16 [getByte n 0, getByte n 1]
-
-word8sToWord16 :: [Word8] -> Word16
-word8sToWord16 [b1, b2] = (fromIntegral b1 `shiftL` 8) .|. fromIntegral b2
 
 decodeCharacter :: [Word8] -> [Word8]
 decodeCharacter ws = map (extractByte ws) [7,6..0]

@@ -17,6 +17,8 @@ import Data.Bits
 import Data.IORef
 import Data.Word
 
+import System.Hardware.PiLcd.Util
+
 ioDirA, ioDirB, iPolA, iPolB, gpIntEnA, gpIntEnB, defValA, defValB :: Word8
 intConA, intConB, ioCon, gpPuA, gpPuB, intFA, intFB :: Word8
 intCapA, intCapB, gpioA, gpioB, olatA, olatB :: Word8
@@ -56,12 +58,6 @@ data PortExpander =
   , peGpPu  :: IORef Word16
   , peOlat  :: IORef Word16
   }
-
-word8sToWord16 :: [Word8] -> Word16
-word8sToWord16 [b1, b2] = (fromIntegral b1 `shiftL` 8) .|. fromIntegral b2
-
-word16ToWord8s :: Word16 -> [Word8]
-word16ToWord8s w = [fromIntegral (w `shiftR` 8), fromIntegral w]
 
 readReg16 :: ReadFunc -> Word8 -> IO Word16
 readReg16 rf reg = word8sToWord16 <$> rf reg 2

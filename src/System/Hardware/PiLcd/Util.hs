@@ -3,6 +3,8 @@
 module System.Hardware.PiLcd.Util
   ( padLine
   , bitIf
+  , word8sToWord16
+  , word16ToWord8s
   ) where
 
 import Data.Bits
@@ -22,3 +24,9 @@ padLine columns txt =
 
 bitIf :: Bool -> Int -> Word8
 bitIf b n = if b then bit n else 0
+
+word8sToWord16 :: [Word8] -> Word16
+word8sToWord16 [b1, b2] = (fromIntegral b1 `shiftL` 8) .|. fromIntegral b2
+
+word16ToWord8s :: Word16 -> [Word8]
+word16ToWord8s w = [fromIntegral (w `shiftR` 8), fromIntegral w]
