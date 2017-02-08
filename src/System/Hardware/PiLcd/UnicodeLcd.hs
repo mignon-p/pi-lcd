@@ -25,6 +25,7 @@ import Data.Word
 
 import System.Hardware.PiLcd.Font5x8
 import System.Hardware.PiLcd.Hd44780
+import System.Hardware.PiLcd.Util
 
 data Lcd =
   Lcd
@@ -207,8 +208,7 @@ bytesToSpans old new =
 ensureLength :: LcdOptions -> [T.Text] -> [T.Text]
 ensureLength lo ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
   where
-    ensureCols t =
-      T.take numColumns $ T.append t $ T.replicate numColumns $ T.singleton ' '
+    ensureCols = padLine numColumns
     numLines = loLines lo
     numColumns = loColumns lo
 

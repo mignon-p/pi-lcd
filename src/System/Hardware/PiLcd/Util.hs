@@ -10,10 +10,13 @@ import Data.Monoid
 import qualified Data.Text as T
 import Data.Word
 
+space :: T.Text
+space = T.singleton ' '
+
 padLine :: Int -> T.Text -> T.Text
 padLine columns txt =
   let len = T.length txt
-  in if | len < columns -> txt <> T.replicate (columns - len) (T.singleton ' ')
+  in if | len < columns -> txt <> T.replicate (columns - len) space
         | len > columns -> T.take columns txt
         | otherwise -> txt
 
