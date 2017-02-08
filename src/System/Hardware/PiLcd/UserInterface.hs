@@ -14,8 +14,6 @@ module System.Hardware.PiLcd.UserInterface
 import Data.Monoid
 import qualified Data.Text as T
 
-import System.Hardware.PiLcd.Font5x8
-
 data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
             deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
