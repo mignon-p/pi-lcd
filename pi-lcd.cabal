@@ -13,10 +13,20 @@ name:                pi-lcd
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
--- synopsis:
+synopsis: Control an Adafruit character LCD and keypad kit on a Raspberry Pi
 
 -- A longer description of the package.
--- description:
+description:
+    This package allows using an
+    <https://www.adafruit.com/categories/808 Adafruit character LCD and keypad kit>
+    on a Raspberry Pi from Haskell.
+    Everything you need to use one of these LCDs is exposed in the
+    @System.Hardware.PiLcd@ module.  The submodules are only exposed
+    because they might be useful to reuse for other types of hardware,
+    such as if you are using an MCP23017 port expander or an HD44780
+    display controller in some other context.  But if you're using the
+    Adafruit character LCD and keypad kit, all you need is
+    @System.Hardware.PiLcd@.
 
 -- The license under which the package is released.
 license:             BSD3
