@@ -27,13 +27,17 @@ module System.Hardware.PiLcd
   , defaultUiState
   , runUi
   , runUiUntilDone
+  , withPiLcd
+  , withPiLcdThenTurnOff
   ) where
 
 import Control.Applicative
 import Control.Concurrent
+import Control.Exception
 import Control.Monad
 import Data.Bits
 import Data.IORef
+import Data.Monoid
 import qualified Data.Text as T
 import Data.Word
 import System.Clock
@@ -260,3 +264,47 @@ runUiUntilDone lcd dat st = do
     else do
     threadDelay 20000
     runUiUntilDone lcd dat st'
+
+withPiLcd :: LcdAddress
+          -> LcdOptions
+          -> (PiLcd -> IO a)
+          -> IO a
+withPiLcd = withPiLcd' closePiLcd
+
+withPiLcdThenTurnOff :: LcdAddress
+                     -> LcdOptions
+                     -> (PiLcd -> IO a)
+                     -> IO a
+withPiLcdThenTurnOff = withPiLcd' turnOffAndClosePiLcd
+
+wrapLine :: Int -> T.Text -> [T.Text]
+wrapLine columns txt
+  | T.length txt <= columns = [txt]
+  | otherwise = let (first, rest) = T.splitAt columns txt
+                in first : wrapLine columns rest
+
+displayException :: PiLcd -> SomeException -> IO ()
+displayException lcd se = do
+  let columns = loColumns $ U.lcdOptions $ plLcd lcd
+      rows = loLines $ U.lcdOptions $ plLcd lcd
+      txt = padLine (columns * rows) $ T.pack $ show se
+      txts = wrapLine columns txt
+  setBacklightColor lcd Red
+  updateDisplay lcd txts
+
+withPiLcd' :: (PiLcd -> IO ())
+           -> LcdAddress
+           -> LcdOptions
+           -> (PiLcd -> IO a)
+           -> IO a
+withPiLcd' closeFunc la lo body = do
+  lcd <- openPiLcd la lo
+  eth <- try (body lcd)
+  case eth of
+    Left e -> do
+      displayException lcd e
+      closePiLcd lcd
+      throwIO e
+    Right x -> do
+      closeFunc lcd
+      return x
