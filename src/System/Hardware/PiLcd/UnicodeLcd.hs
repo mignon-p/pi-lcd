@@ -275,7 +275,7 @@ mkLcd cb lo = do
       nonChar = chr 0xffff -- a noncharacter according to Unicode standard
   ref <- newIORef ls
   cust <- newIORef (0, replicate 8 (nonChar, 0))
-  let (Just builtIn) = (loRomCode lo) `lookup` hashTables -- should be safe
+  let (Just builtIn) = loRomCode lo `lookup` hashTables -- should be safe
       ce = CharEncoding
            { ceBuiltIn = builtIn
            , ceCustom = loCustomChars lo
@@ -288,9 +288,9 @@ data CharStatus = CharBuiltin | CharCustom | CharNotFound
 
 getCharStatus :: Lcd -> Char -> CharStatus
 getCharStatus lcd c =
-  let ce = (lcdEncoding lcd)
-      user = c `lookup` (ceCustom ce)
-      builtIn = c `H.lookup` (ceBuiltIn ce)
+  let ce = lcdEncoding lcd
+      user = c `lookup` ceCustom ce
+      builtIn = c `H.lookup` ceBuiltIn ce
       inFont = getCharacter c
   in case user of
     (Just _) -> CharCustom
@@ -304,8 +304,8 @@ getCharStatus lcd c =
 
 getCharData :: Lcd -> Char -> Maybe [Word8]
 getCharData lcd c =
-  let ce = (lcdEncoding lcd)
-      user = c `lookup` (ceCustom ce)
+  let ce = lcdEncoding lcd
+      user = c `lookup` ceCustom ce
   in case user of
     (Just _) -> user
     Nothing -> getCharacter c
@@ -330,7 +330,7 @@ allocateCustomChars ci chars =
   let (chars', available) = matchExistingChars (snd ci) chars
       available' = map fst $ sortBy (comparing snd) available
       pairs = zip available' chars'
-      generation = 1 + (fst ci)
+      generation = 1 + fst ci
       newStuff = zipWith replace [0..] (snd ci)
       replace i old@(c, _) = case i `lookup` pairs of
                                Nothing -> if c `elem` chars

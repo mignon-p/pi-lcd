@@ -51,7 +51,6 @@ import Control.Exception
 import Control.Monad
 import Data.Bits
 import Data.IORef
-import Data.Monoid
 import qualified Data.Text as T
 import Data.Word
 import System.Clock
@@ -219,7 +218,7 @@ mkByte bus =
   bitIf (lbRS bus) 7 +
   bitIf (lbRW bus) 6 +
   bitIf (lbE  bus) 5 +
-  case (lbDB bus) of
+  case lbDB bus of
     Nothing -> 0
     (Just d) -> reverseNibble d `shiftL` 1
 
@@ -228,7 +227,7 @@ sendFunc pe bus = do
   let b = mkByte bus
   writeGpio pe (fromIntegral b) 0xfe
   let dataBits = 0x1e
-      x = case (lbDB bus) of
+      x = case lbDB bus of
             Nothing -> dataBits
             (Just _) -> 0
   writeIoDir pe x dataBits
@@ -272,7 +271,7 @@ mkCallbacks pe =
 -- of lines is truncated or padded with blank lines to
 -- make it the height of the display.
 updateDisplay :: PiLcd -> [T.Text] -> IO ()
-updateDisplay lcd txt = U.updateDisplay (plLcd lcd) txt
+updateDisplay lcd = U.updateDisplay (plLcd lcd)
 
 -- | Closes the 'PiLcd', leaving the display contents and
 -- backlight setting untouched.

@@ -89,7 +89,7 @@ mkPortExpander rf wf = do
   [ioConOld] <- rf ioCon 1
   let ioConNew = clearBit ioConOld 5 -- 5 is SEQOP bit
   wf ioCon [ioConNew]
-  return $ PortExpander
+  return PortExpander
     { peRead = rf
     , peWrite = wf
     , peIoDir = rIoDir

@@ -99,8 +99,8 @@ sanitizeState :: UiData -> UiState -> UiState
 sanitizeState dat st =
   let nList    = length $ udList    dat
       nButtons = length $ udButtons dat
-      sList    = (usList st)    `mod` nList
-      sButtons = (usButtons st) `mod` nButtons
+      sList    = usList st    `mod` nList
+      sButtons = usButtons st `mod` nButtons
   in st { usList = sList, usButtons = sButtons }
 
 renderUi :: UiData -> UiState -> Int -> [T.Text]
@@ -109,7 +109,7 @@ renderUi dat st columns =
       lstLine = case lst of
                   [] -> T.empty
                   [x] -> x
-                  _ -> padLine (columns - 1) (lst !! (usList st)) `T.snoc` '↕'
+                  _ -> padLine (columns - 1) (lst !! usList st) `T.snoc` '↕'
       cc = arrows (usInternal st)
       btns = renderButtons cc (usButtons st) (mkButtons (udButtons dat) columns) 0
   in [lstLine, scrollButtons btns columns]
