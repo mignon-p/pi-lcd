@@ -1,12 +1,47 @@
+{-|
+Module      : System.Hardware.PiLcd.Mcp23017
+Description : Control the MCP23017 port expander
+Copyright   : © Patrick Pelletier, 2017
+License     : BSD3
+Maintainer  : code@funwithsoftware.org
+
+This module lets you control an
+<https://www.adafruit.com/products/732 MCP23017> port expander
+(<https://cdn-shop.adafruit.com/datasheets/mcp23017.pdf datasheet>),
+such as the one used in the
+<https://www.adafruit.com/category/808 Adafruit LCD+Keypad Kit>.
+-}
+
 module System.Hardware.PiLcd.Mcp23017
-  ( ReadFunc
-  , WriteFunc
-  , PortExpander
+  ( -- * Creating a Port Expander
+    -- | Note: the 'PortExpander' caches register values, so it
+    -- assumes no one else is going to be writing to the MCP23017
+    -- during the lifetime of the 'PortExpander'.
+    PortExpander
   , mkPortExpander
+    -- ** Read and write functions
+    -- | These functions are used for reading and writing the
+    -- MCP23017\'s registers.  Generally, you would want to specify
+    -- the @i2cReadReg@ and @i2cWriteReg@ functions from the
+    -- @System.Hardware.PiLcd.I2c@ module, partially applied to
+    -- the @I2cHandle@ and the chip's address on the I2C bus.
+    -- However, by supplying SPI read and write functions instead,
+    -- you could probably interface with an MCP23S17, although
+    -- this has not been tested.
+  , ReadFunc
+  , WriteFunc
+    -- * Writing to registers
+    -- | Each pair of 8-bit registers (\"A\" and \"B\") is treated
+    -- as a 16-bit register, with \"A\" in the most significant
+    -- 8 bits, and \"B\" in the least significant 8 bits.
+    -- Each write function takes a mask operand, which specifies
+    -- which bits to change.  Bits which are \"0\" in the mask
+    -- are left unchanged.
   , writeIoDir
   , writeIPol
   , writeGpPu
   , writeGpio
+    -- * Reading from registers
   , readGpio
   , readGpioA
   , readGpioB
@@ -44,9 +79,14 @@ gpioB    = 19
 olatA    = 20
 -- olatB    = 21
 
+-- | Specifies a register number, and the number of
+-- consecutive bytes to read.
 type ReadFunc = Word8 -> Int -> IO [Word8]
+
+-- | Specifies the register number, and the bytes to write.
 type WriteFunc = Word8 -> [Word8] -> IO ()
 
+-- | Opaque type representing an MCP23017 port expander.
 data PortExpander =
   PortExpander
   { peRead  :: ReadFunc
@@ -73,6 +113,7 @@ modifyReg16 wf shadow reg bits mask = do
     (True, True)   -> return ()
   writeIORef shadow val
 
+-- | Given a 'ReadFunc' and a 'WriteFunc', makes a 'PortExpander'.
 mkPortExpander :: ReadFunc -> WriteFunc -> IO PortExpander
 mkPortExpander rf wf = do
   ioDir  <- readReg16 rf ioDirA
@@ -96,30 +137,55 @@ mkPortExpander rf wf = do
     , peOlat = rOlat
     }
 
-writeIoDir :: PortExpander -> Word16 -> Word16 -> IO ()
+-- | Write to I/O Direction Register.  (§ 1.6.1 of datasheet)
+writeIoDir :: PortExpander
+           -> Word16 -- ^ The value to write.  A '1' bit indicates an
+                     -- input, and a '0' bit indicates an output.
+           -> Word16 -- ^ Mask of bits to write.
+           -> IO ()
 writeIoDir pe bits mask =
   modifyReg16 (peWrite pe) (peIoDir pe) ioDirA bits mask
 
-writeIPol :: PortExpander -> Word16 -> Word16 -> IO ()
+-- | Write to Input Polarity Register.  (§ 1.6.2 of datasheet)
+writeIPol :: PortExpander
+          -> Word16 -- ^ The value to write.  A '1' bit means the input
+                    -- will be inverted.
+          -> Word16 -- ^ Mask of bits to write.
+          -> IO ()
 writeIPol pe bits mask =
   modifyReg16 (peWrite pe) (peIPol pe) iPolA bits mask
 
-writeGpPu :: PortExpander -> Word16 -> Word16 -> IO ()
+-- | Write to Pull-Up Resistor Configuration Register.  (§ 1.6.7 of datasheet)
+writeGpPu :: PortExpander
+          -> Word16 -- ^ The value to write.  A '1' bit means the input
+                    -- will be pulled up with a 100 kΩ resistor.
+          -> Word16 -- ^ Mask of bits to write.
+          -> IO ()
 writeGpPu pe bits mask =
   modifyReg16 (peWrite pe) (peGpPu pe) gpPuA bits mask
 
-writeGpio :: PortExpander -> Word16 -> Word16 -> IO ()
+-- | Write to Output Latch Register.  (§ 1.6.11 of datasheet)
+writeGpio :: PortExpander
+          -> Word16 -- ^ The value to write.  This controls the value
+                    -- of the output pins.
+          -> Word16 -- ^ Mask of bits to write.
+          -> IO ()
 writeGpio pe bits mask =
   modifyReg16 (peWrite pe) (peOlat pe) olatA bits mask
 
+-- | Read from the Port Register.  (§ 1.6.10 of datasheet)
+-- Port A is in the most significant 8 bits, and Port B is in the
+-- least significant 8 bits.
 readGpio :: PortExpander -> IO Word16
 readGpio pe = readReg16 (peRead pe) gpioA
 
+-- | Read from Port Register A.  (§ 1.6.10 of datasheet)
 readGpioA :: PortExpander -> IO Word8
 readGpioA pe = do
   [r] <- peRead pe gpioA 1
   return r
 
+-- | Read from Port Register B.  (§ 1.6.10 of datasheet)
 readGpioB :: PortExpander -> IO Word8
 readGpioB pe = do
   [r] <- peRead pe gpioB 1

@@ -1,5 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : System.Hardware.PiLcd.Hd44780
+Description : Control the HD44780U LCD controller
+Copyright   : © Patrick Pelletier, 2017
+License     : BSD3
+Maintainer  : code@funwithsoftware.org
+
+This module lets you control an HD44780U Dot Matrix Liquid Crystal
+Display Controller/Driver
+(<https://www.adafruit.com/datasheets/HD44780.pdf datasheet>),
+such as the one used in the
+<https://www.adafruit.com/category/808 Adafruit LCD+Keypad Kit>.
+-}
+
 module System.Hardware.PiLcd.Hd44780
   ( LcdBus (..)
   , LcdCallbacks (..)
@@ -107,6 +121,9 @@ read8 cb rs = do
   lo <- read4 cb rs
   return $ (hi `shiftL` 4) .|. (lo .&. 0xf)
 
+-- | Initializes the LCD and clears the screen.  You must
+-- call this function first, before any of the other
+-- LCD functions.
 lcdInitialize :: LcdCallbacks -> IO ()
 lcdInitialize cb = do
   -- initialization according to Figure 24
@@ -140,13 +157,19 @@ busyWait cb = do
     yield
     busyWait cb
 
+-- | Clears the screen.
 lcdClear :: LcdCallbacks -> IO ()
 lcdClear cb = doCmd cb (bit 0)
 
 lcdHome :: LcdCallbacks -> IO ()
 lcdHome cb = doCmd cb (bit 1)
 
-lcdControl :: LcdCallbacks -> Bool -> Bool -> Bool -> IO ()
+-- | Controls what is shown on the LCD.
+lcdControl :: LcdCallbacks
+           -> Bool -- Enable display
+           -> Bool -- Enable underline cursor
+           -> Bool -- Enable blinking block cursor
+           -> IO ()
 lcdControl cb d c b =
   doCmd cb (bit 3 +
             bitIf d 2 +
@@ -159,7 +182,18 @@ lcdMode cb id s =
             bitIf id 1 +
             bitIf s 0)
 
-lcdWrite :: LcdCallbacks -> Word8 -> Word8 -> B.ByteString -> IO ()
+-- | Writes text onto the screen.  To position the cursor
+-- without writing anything, you can write a zero-length string.
+lcdWrite :: LcdCallbacks
+         -> Word8 -- ^ Line number.  Must be 0 or 1.  (Even
+                  -- <https://www.adafruit.com/products/198 displays with four physical lines>
+                  -- are modeled internally as 2 lines.)
+         -> Word8 -- ^ Column number, starting at 0.
+         -> B.ByteString -- ^ Characters to write to the display.  Must be
+                         -- encoded in the controller's native character
+                         -- encoding.  See Table 4 on pages 17-18 of the
+                         -- HD44780U datasheet.
+         -> IO ()
 lcdWrite cb line col bs = do
   let pos = col + line * 0x40
   doCmd cb (0x80 .|. pos)
@@ -175,7 +209,12 @@ lcdRead cb line col len = do
     return d
   return $ B.pack ws
 
-lcdDefineChar :: LcdCallbacks -> Word8 -> [Word8] -> IO ()
+-- | Defines a custom character.
+lcdDefineChar :: LcdCallbacks
+              -> Word8   -- The character code to define.  Must be 0-7.
+              -> [Word8] -- The bitmap data.  Must be 8 bytes, with
+                         -- data in the least significant 5 bits of each byte.
+              -> IO ()
 lcdDefineChar cb c bitmap = do
   when (c >= 8) $
     fail $ "lcdDefineChar: character must be between 0-7; got " ++ show c
