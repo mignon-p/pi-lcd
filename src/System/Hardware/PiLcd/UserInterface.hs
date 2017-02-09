@@ -1,3 +1,21 @@
+{-|
+Module      : System.Hardware.PiLcd.UserInterace
+Description : A simple user interface for LCDs
+Copyright   : © Patrick Pelletier, 2017
+License     : BSD3
+Maintainer  : code@funwithsoftware.org
+
+Displays a simple user interface.  The first line of the display
+is used as a \"list box\", where the user can scroll through a
+list of items one at a time using the up and down buttons.
+The second line of the display is used for virtual \"buttons\",
+such as \"OK\" and \"Cancel\".  The user uses the left and right buttons
+to select a virtual \"button\".  When the user presses the
+Select button, the interaction is considered done, and the calling
+program is given the list item and button selection that the user
+made.
+-}
+
 module System.Hardware.PiLcd.UserInterface
   ( Button(..)
   , ButtonDirection(..)
