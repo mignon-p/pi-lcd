@@ -19,32 +19,30 @@ import Data.Word
 
 import System.Hardware.PiLcd.Util
 
-ioDirA, ioDirB, iPolA, iPolB, gpIntEnA, gpIntEnB, defValA, defValB :: Word8
-intConA, intConB, ioCon, gpPuA, gpPuB, intFA, intFB :: Word8
-intCapA, intCapB, gpioA, gpioB, olatA, olatB :: Word8
+ioDirA, iPolA, ioCon, gpPuA, gpioA, gpioB, olatA :: Word8
 
 -- We are going to assume/hope that the BANK bit in IOCON is 0
 ioDirA   = 0
-ioDirB   = 1
+-- ioDirB   = 1
 iPolA    = 2
-iPolB    = 3
-gpIntEnA = 4
-gpIntEnB = 5
-defValA  = 6
-defValB  = 7
-intConA  = 8
-intConB  = 9
+-- iPolB    = 3
+-- gpIntEnA = 4
+-- gpIntEnB = 5
+-- defValA  = 6
+-- defValB  = 7
+-- intConA  = 8
+-- intConB  = 9
 ioCon    = 10
 gpPuA    = 12
-gpPuB    = 13
-intFA    = 14
-intFB    = 15
-intCapA  = 16
-intCapB  = 17
+-- gpPuB    = 13
+-- intFA    = 14
+-- intFB    = 15
+-- intCapA  = 16
+-- intCapB  = 17
 gpioA    = 18
 gpioB    = 19
 olatA    = 20
-olatB    = 21
+-- olatB    = 21
 
 type ReadFunc = Word8 -> Int -> IO [Word8]
 type WriteFunc = Word8 -> [Word8] -> IO ()
@@ -66,7 +64,7 @@ modifyReg16 :: WriteFunc -> IORef Word16 -> Word8 -> Word16 -> Word16 -> IO ()
 modifyReg16 wf shadow reg bits mask = do
   old16 <- readIORef shadow
   let val = (old16 .&. complement mask) `xor` bits
-      old8s@[o8a, o8b] = word16ToWord8s old16
+      [o8a, o8b]       = word16ToWord8s old16
       val8s@[v8a, v8b] = word16ToWord8s val
   case (o8a == v8a, o8b == v8b) of
     (False, False) -> wf reg val8s

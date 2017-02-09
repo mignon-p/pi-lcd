@@ -33,7 +33,6 @@ module System.Hardware.PiLcd.UnicodeLcd
 
 import Control.Arrow
 import Control.Monad
-import Data.Bits
 import Data.Char
 import qualified Data.ByteString as B
 import qualified Data.HashMap.Strict as H
@@ -267,7 +266,7 @@ rearrange xs = [l1, l2]
         f [y] = (y, mempty)
         f (y1:y2:rest) =
           let (z1, z2) = f rest
-          in (y1 <> z2, y2 <> z2)
+          in (y1 <> z1, y2 <> z2)
 
 mkLcd :: LcdCallbacks -> LcdOptions -> IO Lcd
 mkLcd cb lo = do
