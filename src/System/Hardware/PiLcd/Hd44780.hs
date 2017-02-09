@@ -46,8 +46,10 @@ dataReg = True
 writeMode = False
 readMode  = True
 
+{-
 nanoseconds :: Int -> Int
 nanoseconds = id
+-}
 
 microseconds :: Int -> Int
 microseconds = (* 1000)
@@ -161,8 +163,10 @@ busyWait cb = do
 lcdClear :: LcdCallbacks -> IO ()
 lcdClear cb = doCmd cb (bit 0)
 
+{-
 lcdHome :: LcdCallbacks -> IO ()
 lcdHome cb = doCmd cb (bit 1)
+-}
 
 -- | Controls what is shown on the LCD.
 lcdControl :: LcdCallbacks
@@ -199,6 +203,7 @@ lcdWrite cb line col bs = do
   doCmd cb (0x80 .|. pos)
   forM_ (B.unpack bs) $ \b -> doData cb b
 
+{-
 lcdRead :: LcdCallbacks -> Word8 -> Word8 -> Word8 -> IO B.ByteString
 lcdRead cb line col len = do
   let pos = col + line * 0x40
@@ -208,6 +213,7 @@ lcdRead cb line col len = do
     busyWait cb
     return d
   return $ B.pack ws
+-}
 
 -- | Defines a custom character.
 lcdDefineChar :: LcdCallbacks
