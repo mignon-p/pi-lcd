@@ -27,7 +27,6 @@ module System.Hardware.PiLcd.UserInterface
   , runUi
   ) where
 
-import Data.Monoid
 import qualified Data.Text as T
 
 import System.Hardware.PiLcd.Util
