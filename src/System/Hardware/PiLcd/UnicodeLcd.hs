@@ -18,19 +18,22 @@ Only supports characters which are made up of a single code point.
 contains decomposed characters, consider using the
 <https://hackage.haskell.org/package/unicode-transforms unicode-transforms>
 package to convert to Normalization Form C.
+
+Displays up to 20x4 should be supported, although only 16x2 has been tested.
 -}
 
 module System.Hardware.PiLcd.UnicodeLcd
-  ( Lcd
+  ( -- * Creating an LCD
+    mkLcd
+  , Lcd
+  , lcdOptions
   , LcdOptions(..)
-  , RomCode(..)
   , defaultLcdOptions
-  -- , supportedChars
+  , RomCode(..)
+    -- * Displaying text
+  , updateDisplay
   , getCharStatus
   , CharStatus(..)
-  , mkLcd
-  , lcdOptions
-  , updateDisplay
   ) where
 
 import Control.Arrow
@@ -69,8 +72,7 @@ data CharEncoding =
   , ceCustomMapping :: [Char]
   }
 
--- | Specifies the characteristics of the LCD.  Displays up to
--- 20x4 should be supported, although only 16x2 has been tested.
+-- | Specifies the characteristics of the LCD.
 data LcdOptions =
   LcdOptions
   { loLines :: Int        -- ^ Number of lines
@@ -93,7 +95,7 @@ defaultLcdOptions =
   , loCustomChars = []
   }
 
--- The HD44780U LCD controller comes in two different variants with
+-- | The HD44780U LCD controller comes in two different variants with
 -- different character ROMs.  (See Table 4 on pages 17-18 of the
 -- <https://www.adafruit.com/datasheets/HD44780.pdf HD44780U datasheet>.)
 -- Unfortunately, as best as I can interpret

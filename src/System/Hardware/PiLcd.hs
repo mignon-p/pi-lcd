@@ -14,14 +14,15 @@ from Haskell.
 
 module System.Hardware.PiLcd
   ( -- * Creating a PiLcd
-    PiLcd
+    openPiLcd
+  , closePiLcd
+  , turnOffAndClosePiLcd
+  , PiLcd
   , LcdAddress(..)
   , defaultLcdAddress
   , LcdOptions(..)
+  , RomCode(..)
   , defaultLcdOptions
-  , openPiLcd
-  , closePiLcd
-  , turnOffAndClosePiLcd
     -- * Backlight color
   , Color(..)
   , setBacklightColor
@@ -31,7 +32,7 @@ module System.Hardware.PiLcd
   , ButtonEvent(..)
   , getButtonEvent
   , getButtons
-    -- * Button bitmask values
+    -- ** Button bitmask values
   , buttonSelect
   , buttonRight
   , buttonDown
@@ -95,7 +96,7 @@ import System.Hardware.PiLcd.I2c
 import System.Hardware.PiLcd.Mcp23017
 import qualified System.Hardware.PiLcd.UnicodeLcd as U
 import System.Hardware.PiLcd.UnicodeLcd
-  (LcdOptions(..), defaultLcdOptions)
+  (LcdOptions(..), defaultLcdOptions, RomCode(..))
 import qualified System.Hardware.PiLcd.UserInterface as UI
 import System.Hardware.PiLcd.UserInterface
   (Button(..), ButtonDirection(..), ButtonEvent(..),
@@ -323,7 +324,7 @@ turnOffAndClosePiLcd lcd = do
   closePiLcd lcd
 
 -- | Updates the display based on the given UI state, and updates
--- the UI state based on an button press or release which may have
+-- the UI state based on a button press or release which may have
 -- occurred since the last call.
 runUi :: PiLcd
       -> UiData             -- ^ Data to display in the UI
@@ -361,16 +362,16 @@ runUiUntilDone lcd dat st = do
 -- If an exception occurred, the exception is shown on the LCD.
 withPiLcd :: LcdAddress
           -> LcdOptions
-          -> (PiLcd -> IO a)
-          -> IO a
+          -> (PiLcd -> IO a) -- ^ Body computation
+          -> IO a            -- ^ Result returned by body
 withPiLcd = withPiLcd' closePiLcd
 
 -- | Like 'withPiLcd', but in the non-exceptional case, the display is
 -- cleared and the backlight is turned off.
 withPiLcdThenTurnOff :: LcdAddress
                      -> LcdOptions
-                     -> (PiLcd -> IO a)
-                     -> IO a
+                     -> (PiLcd -> IO a) -- ^ Body computation
+                     -> IO a            -- ^ Result returned by body
 withPiLcdThenTurnOff = withPiLcd' turnOffAndClosePiLcd
 
 wrapLine :: Int -> T.Text -> [T.Text]

@@ -17,14 +17,16 @@ made.
 -}
 
 module System.Hardware.PiLcd.UserInterface
-  ( Button(..)
-  , ButtonDirection(..)
-  , ButtonEvent(..)
-  , UiData(..)
+  ( -- * User interface
+    UiData(..)
   , UiState(..)
   , InternalState
   , defaultUiState
   , runUi
+    -- * Buttons
+  , Button(..)
+  , ButtonDirection(..)
+  , ButtonEvent(..)
   ) where
 
 import qualified Data.Text as T

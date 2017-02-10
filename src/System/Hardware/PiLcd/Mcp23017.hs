@@ -24,7 +24,7 @@ module System.Hardware.PiLcd.Mcp23017
     -- MCP23017\'s registers.  Generally, you would want to specify
     -- the @i2cReadReg@ and @i2cWriteReg@ functions from the
     -- @System.Hardware.PiLcd.I2c@ module, partially applied to
-    -- the @I2cHandle@ and the chip's address on the I2C bus.
+    -- the @I2cHandle@ and the chip's address on the I²C bus.
     -- However, by supplying SPI read and write functions instead,
     -- you could probably interface with an MCP23S17, although
     -- this has not been tested.

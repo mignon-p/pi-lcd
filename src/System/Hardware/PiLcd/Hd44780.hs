@@ -170,9 +170,9 @@ lcdHome cb = doCmd cb (bit 1)
 
 -- | Controls what is shown on the LCD.
 lcdControl :: LcdCallbacks
-           -> Bool -- Enable display
-           -> Bool -- Enable underline cursor
-           -> Bool -- Enable blinking block cursor
+           -> Bool -- ^ Enable display
+           -> Bool -- ^ Enable underline cursor
+           -> Bool -- ^ Enable blinking block cursor
            -> IO ()
 lcdControl cb d c b =
   doCmd cb (bit 3 +
@@ -217,8 +217,8 @@ lcdRead cb line col len = do
 
 -- | Defines a custom character.
 lcdDefineChar :: LcdCallbacks
-              -> Word8   -- The character code to define.  Must be 0-7.
-              -> [Word8] -- The bitmap data.  Must be 8 bytes, with
+              -> Word8   -- ^ The character code to define.  Must be 0-7.
+              -> [Word8] -- ^ The bitmap data.  Must be 8 bytes, with
                          -- data in the least significant 5 bits of each byte.
               -> IO ()
 lcdDefineChar cb c bitmap = do
