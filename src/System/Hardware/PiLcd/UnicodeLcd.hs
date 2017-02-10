@@ -23,9 +23,11 @@ package to convert to Normalization Form C.
 module System.Hardware.PiLcd.UnicodeLcd
   ( Lcd
   , LcdOptions(..)
+  , RomCode(..)
   , defaultLcdOptions
   -- , supportedChars
   , getCharStatus
+  , CharStatus(..)
   , mkLcd
   , lcdOptions
   , updateDisplay
@@ -67,14 +69,21 @@ data CharEncoding =
   , ceCustomMapping :: [Char]
   }
 
+-- | Specifies the characteristics of the LCD.  Displays up to
+-- 20x4 should be supported, although only 16x2 has been tested.
 data LcdOptions =
   LcdOptions
-  { loLines :: Int
-  , loColumns :: Int
-  , loRomCode :: RomCode
-  , loCustomChars :: [(Char, [Word8])]
+  { loLines :: Int        -- ^ Number of lines
+  , loColumns :: Int      -- ^ Number of columns
+  , loRomCode :: RomCode  -- ^ Built-in character set
+  , loCustomChars :: [(Char, [Word8])] -- ^ Additional user-defined characters,
+                                       -- beyond those in the 5x8 fixed font.
+                                       -- Character is defined as 8 bytes, with
+                                       -- data in least-significant 5 bits.
   } deriving (Eq, Ord, Show, Read)
 
+-- | Defaults to 2 lines, 16 columns, ROM code A00, and no additional
+-- custom characters.
 defaultLcdOptions :: LcdOptions
 defaultLcdOptions =
   LcdOptions
@@ -84,7 +93,17 @@ defaultLcdOptions =
   , loCustomChars = []
   }
 
--- https://forums.adafruit.com/viewtopic.php?f=50&t=111019
+-- The HD44780U LCD controller comes in two different variants with
+-- different character ROMs.  (See Table 4 on pages 17-18 of the
+-- <https://www.adafruit.com/datasheets/HD44780.pdf HD44780U datasheet>.)
+-- Unfortunately, as best as I can interpret
+-- <https://forums.adafruit.com/viewtopic.php?f=50&t=111019 this exchange with Adafruit customer support>,
+-- Adafruit ships a mixture of A00 ROMs and A02 ROMs, depending on what's
+-- available at the moment.
+-- (\"We take what's available or we don't sell LCDs.\")  This is a bit
+-- annoying, since there doesn't seem to be any way to query the HD44780U
+-- to find out which ROM it has.  So, the user has to test their LCD
+-- and then specify which ROM they have.
 
 data RomCode = RomA00 | RomA02
              deriving (Eq, Ord, Show, Read, Bounded, Enum)
@@ -237,6 +256,11 @@ ensureLength lo ls = map ensureCols $ take numLines $ ls ++ repeat T.empty
 txtToBs :: CharEncoding -> T.Text -> B.ByteString
 txtToBs ce txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte ce) $ T.unpack txt
 
+-- | Updates the contents of the LCD.  You must specify the full contents
+-- of the screen, but only the parts which have changed since the last update
+-- are sent to the hardware.  Converts from Unicode to the display's
+-- internal encoding, and automatically creates custom characters for
+-- characters which are not directly supported by the LCD.
 updateDisplay :: Lcd -> [T.Text] -> IO ()
 updateDisplay lcd newText = do
   let cc = getCustomChars lcd $ concatMap T.unpack newText
@@ -268,6 +292,8 @@ rearrange xs = [l1, l2]
           let (z1, z2) = f rest
           in (y1 <> z1, y2 <> z2)
 
+-- | Given callbacks and options, creates an 'Lcd'.  Assumes the display
+-- has already been initialized via a call to 'lcdInitialize'.
 mkLcd :: LcdCallbacks -> LcdOptions -> IO Lcd
 mkLcd cb lo = do
   let ls = rearrange $ replicate (loLines lo) $ B.replicate (loColumns lo) 0x20
@@ -282,9 +308,18 @@ mkLcd cb lo = do
            }
   return $ Lcd lo cb ref cust ce
 
-data CharStatus = CharBuiltin | CharCustom | CharNotFound
+data CharStatus = CharBuiltin   -- ^ character is supported by the LCD's ROM
+                | CharCustom    -- ^ not supported by ROM, but available in
+                                -- <https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html 5x8 fixed font>,
+                                -- or in the user-defined characters specified
+                                -- in 'loCustomChars'
+                | CharNotFound  -- ^ not available in ROM, 5x8 fixed font, or
+                                -- 'loCustomChars'
                 deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
+-- | Given a Unicode code point, determines whether the character is
+-- built-in, or is considered a custom character (of which only eight can
+-- be on the screen at any one time).
 getCharStatus :: Lcd -> Char -> CharStatus
 getCharStatus lcd c =
   let ce = lcdEncoding lcd

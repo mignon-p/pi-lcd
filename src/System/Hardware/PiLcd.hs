@@ -13,34 +13,68 @@ from Haskell.
 -}
 
 module System.Hardware.PiLcd
-  ( PiLcd
+  ( -- * Creating a PiLcd
+    PiLcd
   , LcdAddress(..)
   , defaultLcdAddress
+  , LcdOptions(..)
+  , defaultLcdOptions
+  , openPiLcd
+  , closePiLcd
+  , turnOffAndClosePiLcd
+    -- * Backlight color
   , Color(..)
+  , setBacklightColor
+    -- * Buttons
   , Button(..)
   , ButtonDirection(..)
   , ButtonEvent(..)
-  , openPiLcd
+  , getButtonEvent
   , getButtons
+    -- * Button bitmask values
   , buttonSelect
   , buttonRight
   , buttonDown
   , buttonUp
   , buttonLeft
-  , getButtonEvent
-  , setBacklightColor
+    -- * Display
+    -- | Displays Unicode text on an LCD.  Only updates the parts
+    -- of the LCD which have changed.  Automatically manages
+    -- custom characters, using the
+    -- <https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html 5x8 fixed font>
+    -- for characters which are not built-in to the the LCD controller's ROM.
+    -- Only eight distinct non-built-in characters can be on the display
+    -- at any one time.
+    --
+    -- Only supports characters which are made up of a single code point.
+    -- (In other words, combining marks are not supported.)  If your input
+    -- contains decomposed characters, consider using the
+    -- <https://hackage.haskell.org/package/unicode-transforms unicode-transforms>
+    -- package to convert to Normalization Form C.
   , updateDisplay
-  , closePiLcd
-  , turnOffAndClosePiLcd
   , charFromAsciiArt
-  , LcdOptions(..)
-  , defaultLcdOptions
+    -- * User Interface
+    -- | Displays a simple user interface.  The first line of the display
+    -- is used as a \"list box\", where the user can scroll through a
+    -- list of items one at a time using the up and down buttons.
+    -- The second line of the display is used for virtual \"buttons\",
+    -- such as \"OK\" and \"Cancel\".  The user uses the left and right buttons
+    -- to select a virtual \"button\".  When the user presses the
+    -- Select button, the interaction is considered done, and the calling
+    -- program is given the list item and button selection that the user
+    -- made.
   , UiData(..)
   , UiState(..)
   , InternalState
   , defaultUiState
   , runUi
   , runUiUntilDone
+    -- * Exception handling
+    -- | These are specialized forms of 'bracket', where an uncaught
+    -- exception causes the backlight to turn red and the exception to
+    -- be displayed on the LCD.  Then the exception is rethrown.  This
+    -- is useful for headless setups, where the LCD is the primary
+    -- means of user interface.
   , withPiLcd
   , withPiLcdThenTurnOff
   ) where

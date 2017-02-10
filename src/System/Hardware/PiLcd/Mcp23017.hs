@@ -139,8 +139,8 @@ mkPortExpander rf wf = do
 
 -- | Write to I/O Direction Register.  (§ 1.6.1 of datasheet)
 writeIoDir :: PortExpander
-           -> Word16 -- ^ The value to write.  A '1' bit indicates an
-                     -- input, and a '0' bit indicates an output.
+           -> Word16 -- ^ The value to write.  A \'1\' bit indicates an
+                     -- input, and a \'0\' bit indicates an output.
            -> Word16 -- ^ Mask of bits to write.
            -> IO ()
 writeIoDir pe bits mask =
@@ -148,7 +148,7 @@ writeIoDir pe bits mask =
 
 -- | Write to Input Polarity Register.  (§ 1.6.2 of datasheet)
 writeIPol :: PortExpander
-          -> Word16 -- ^ The value to write.  A '1' bit means the input
+          -> Word16 -- ^ The value to write.  A \'1\' bit means the input
                     -- will be inverted.
           -> Word16 -- ^ Mask of bits to write.
           -> IO ()
@@ -157,7 +157,7 @@ writeIPol pe bits mask =
 
 -- | Write to Pull-Up Resistor Configuration Register.  (§ 1.6.7 of datasheet)
 writeGpPu :: PortExpander
-          -> Word16 -- ^ The value to write.  A '1' bit means the input
+          -> Word16 -- ^ The value to write.  A \'1\' bit means the input
                     -- will be pulled up with a 100 kΩ resistor.
           -> Word16 -- ^ Mask of bits to write.
           -> IO ()
