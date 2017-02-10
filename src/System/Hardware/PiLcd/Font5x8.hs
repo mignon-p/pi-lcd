@@ -30,7 +30,6 @@ import qualified Data.ByteString as B
 import Data.Char
 import Data.List
 import Data.Word
-import Debug.Trace
 import System.IO.Unsafe
 import Text.Printf
 
