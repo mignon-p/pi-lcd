@@ -80,15 +80,12 @@ module System.Hardware.PiLcd
   , withPiLcdThenTurnOff
   ) where
 
-import Control.Applicative
 import Control.Concurrent
 import Control.Exception
-import Control.Monad
 import Data.Bits
 import Data.IORef
 import qualified Data.Text as T
 import Data.Word
-import System.Clock
 
 import System.Hardware.PiLcd.Font5x8
 import System.Hardware.PiLcd.Hd44780
@@ -253,49 +250,19 @@ mkByte bus =
   bitIf (lbRS bus) 7 +
   bitIf (lbRW bus) 6 +
   bitIf (lbE  bus) 5 +
-  case lbDB bus of
-    Nothing -> 0
-    (Just d) -> reverseNibble d `shiftL` 1
+  (reverseNibble (lbDB bus) `shiftL` 1)
 
 sendFunc :: PortExpander -> LcdBus -> IO ()
 sendFunc pe bus = do
   let b = mkByte bus
   writeGpio pe (fromIntegral b) 0xfe
   let dataBits = 0x1e
-      x = case lbDB bus of
-            Nothing -> dataBits
-            (Just _) -> 0
-  writeIoDir pe x dataBits
-
-recvFunc :: PortExpander -> IO Word8
-recvFunc pe = do
-  x <- readGpioB pe
-  return $ reverseNibble $ (x `shiftR` 1) .&. 0xf
-
-getNanos :: IO Integer
-getNanos = toNanoSecs <$> getTime Monotonic
-
-spin :: Int -> IO ()
-spin nanos = do
-  start <- getNanos
-  let end = start + fromIntegral nanos
-      sp = do
-        now <- getNanos
-        when (now < end) sp
-  sp
-
-delayFunc :: Int -> IO ()
-delayFunc nanos =
-  if nanos >= 10000
-  then threadDelay $ (nanos + 999) `div` 1000
-  else spin nanos
+  writeIoDir pe 0 dataBits
 
 mkCallbacks :: PortExpander -> LcdCallbacks
 mkCallbacks pe =
   LcdCallbacks
   { lcSend = sendFunc pe
-  , lcRecv = recvFunc pe
-  , lcDelay = delayFunc
   }
 
 -- | Update the display to contain the specified lines
