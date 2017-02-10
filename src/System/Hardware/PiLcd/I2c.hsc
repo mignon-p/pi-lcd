@@ -1,5 +1,17 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+{-|
+Module      : System.Hardware.PiLcd.I2c
+Description : Access peripherals via an I2C bus
+Copyright   : © Patrick Pelletier, 2017
+License     : BSD3
+Maintainer  : code@funwithsoftware.org
+Stability   : experimental
+Portability : Linux
+
+You can use this module to communicate with I2C peripherals on Linux.
+-}
+
 module System.Hardware.PiLcd.I2c
   ( I2cHandle
   , Segment (..)
@@ -28,8 +40,10 @@ import System.Posix.Types
 foreign import ccall "sys/ioctl.h ioctl" c_ioctl ::
   CInt -> CULong -> Ptr I2cRdwrIoctlData -> IO CInt
 
+-- | Represents an I2C bus.
 type I2cHandle = Fd
 
+-- | Represents an I2C read or write, as part of a larger transaction.
 data Segment = Read Int | Write [Word8]
 
 data I2cRdwrIoctlData =
@@ -107,7 +121,13 @@ collectResults ((Read n):segs) bytePtr = do
 collectResults ((Write xs):segs) bytePtr =
   collectResults segs $ advancePtr bytePtr $ length xs
 
-i2cTransaction :: I2cHandle -> Int -> [Segment] -> IO [[Word8]]
+-- | Performs an
+-- <https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/Documentation/i2c/dev-interface I2C_RDWR>
+-- transaction.
+i2cTransaction :: I2cHandle    -- ^ handle to an I2C bus
+               -> Int          -- ^ address of device on I2C bus
+               -> [Segment]    -- ^ list of read/write segments to perform
+               -> IO [[Word8]] -- ^ list of bytes returned for each read segment
 i2cTransaction (Fd fd) addr segs = do
   let len = sum $ map segLength segs
       nSegs = length segs
@@ -120,20 +140,34 @@ i2cTransaction (Fd fd) addr segs = do
         when (r < 0) $ throwErrno "i2cTransaction"
         collectResults segs bytePtr
 
-i2cOpen :: Int -> IO I2cHandle
+-- | Open a handle to an I2C bus.
+i2cOpen :: Int -- ^ bus number
+        -> IO I2cHandle
 i2cOpen bus = do
   let name = "/dev/i2c-" ++ show bus
   openFd name ReadWrite Nothing defaultFileFlags
 
+-- | Close a handle to an I2C bus.
 i2cClose :: I2cHandle -> IO ()
 i2cClose = closeFd
 
-i2cReadReg :: I2cHandle -> Int -> Word8 -> Int -> IO [Word8]
+-- | Writes the register number, and then reads the specified
+-- number of bytes.
+i2cReadReg :: I2cHandle  -- ^ handle to an I2C bus
+           -> Int        -- ^ address of device on the I2C bus
+           -> Word8      -- ^ register number
+           -> Int        -- ^ number of bytes to read
+           -> IO [Word8]
 i2cReadReg h addr reg len = do
   [r] <- i2cTransaction h addr [Write [reg], Read len]
   return r
 
-i2cWriteReg :: I2cHandle -> Int -> Word8 -> [Word8] -> IO ()
+-- | Writes the register number, and then writes the specified bytes.
+i2cWriteReg :: I2cHandle  -- ^ handle to an I2C bus
+            -> Int        -- ^ address of device on the I2C bus
+            -> Word8      -- ^ register number
+            -> [Word8]    -- ^ bytes to write
+            -> IO ()
 i2cWriteReg h addr reg d = do
   i2cTransaction h addr [Write (reg:d)]
   return ()
