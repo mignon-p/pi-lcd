@@ -31,34 +31,44 @@ import qualified Data.Text as T
 
 import System.Hardware.PiLcd.Util
 
+-- | Indicates one of the five buttons on the LCD+Keypad kit.
 data Button = ButtonSelect | ButtonRight | ButtonDown | ButtonUp | ButtonLeft
             deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
+-- | Indicates whether a button was pressed or released.
 data ButtonDirection = Press | Release
                      deriving (Eq, Ord, Show, Read, Bounded, Enum)
 
+-- | Indicates a press or release of one of the five buttons on the
+-- LCD+Keypad kit.
 data ButtonEvent = ButtonEvent Button ButtonDirection
                  deriving (Eq, Ord, Show, Read)
 
+-- | The data to be displayed in the user interface.
 data UiData =
   UiData
-  { udList    :: [T.Text]
-  , udButtons :: [T.Text]
+  { udList    :: [T.Text] -- ^ items to be displayed one-at-a-time on
+                          -- the first line
+  , udButtons :: [T.Text] -- ^ buttons to be displayed on the second line
   } deriving (Eq, Ord, Show, Read)
 
+-- | The current state of the user interaction.
 data UiState =
   UiState
-  { usList     :: Int
-  , usButtons  :: Int
-  , usInternal :: InternalState
+  { usList     :: Int  -- ^ index of item from 'udList' currently displayed
+  , usButtons  :: Int  -- ^ index of button from 'udButtons' currently highlighted
+  , usInternal :: InternalState -- ^ opaque data
   } deriving (Eq, Ord, Show)
 
+-- | Opaque data.
 data InternalState = BeforeSelect | DuringSelect | AfterSelect
   deriving (Eq, Ord)
 
 instance Show InternalState where
   show _ = "<Internal State>"
 
+-- | Defaults to displaying the first list item (index 0) and highlighting
+-- the first button (index 0).
 defaultUiState :: UiState
 defaultUiState =
   UiState
@@ -67,11 +77,17 @@ defaultUiState =
   , usInternal = BeforeSelect
   }
 
-runUi :: UiData
-      -> UiState
-      -> Maybe ButtonEvent
-      -> Int
-      -> ([T.Text], UiState, Bool)
+-- | Computes the text which should be displayed for the current state of
+-- the UI, and optionally applies a button press/release to the state.
+runUi :: UiData             -- ^ Data to display in the UI
+      -> UiState            -- ^ Current state of the interaction
+      -> Maybe ButtonEvent  -- ^ optional button press/release
+      -> Int                -- ^ Number of columns in the LCD
+      -> ([T.Text], UiState, Bool) -- ^ text to display, new UI state,
+                                   -- and a flag indicating whether the
+                                   -- interaction is done (i. e. user has
+                                   -- pressed and released the \"Select\"
+                                   -- button)
 runUi dat st mbe columns =
   let (st', done) = case mbe of
                       Nothing   -> (st, False)
