@@ -322,10 +322,15 @@ turnOffAndClosePiLcd lcd = do
   setBacklightColor lcd Off
   closePiLcd lcd
 
+-- | Updates the display based on the given UI state, and updates
+-- the UI state based on an button press or release which may have
+-- occurred since the last call.
 runUi :: PiLcd
-      -> UiData
-      -> UiState
-      -> IO (UiState, Bool)
+      -> UiData             -- ^ Data to display in the UI
+      -> UiState            -- ^ Current state of the interaction
+      -> IO (UiState, Bool) -- ^ New UI state, and a flag indicating
+                            -- whether the interaction is done (i. e. user has
+                            -- pressed and released the \"Select\" button)
 runUi lcd dat st = do
   mbe <- getButtonEvent lcd
   let columns = loColumns $ U.lcdOptions $ plLcd lcd
@@ -333,10 +338,15 @@ runUi lcd dat st = do
   updateDisplay lcd ls
   return (st', done)
 
+-- | Calls 'runUi' repeatedly, with a short delay in between, feeding back
+-- the state, until the interaction is \"done\".  (i. e. user has
+-- pressed and released the \"Select\" button)  The final state is
+-- returned, which indicates the selection the user has made.
 runUiUntilDone :: PiLcd
-               -> UiData
-               -> UiState
-               -> IO UiState
+               -> UiData  -- ^ Data to display in the UI
+               -> UiState -- ^ Initial state (i. e. which list item and button
+                          -- start out highlighted)
+               -> IO UiState -- ^ Final state (selections user made)
 runUiUntilDone lcd dat st = do
   (st', done) <- runUi lcd dat st
   if done
@@ -345,12 +355,18 @@ runUiUntilDone lcd dat st = do
     threadDelay 20000
     runUiUntilDone lcd dat st'
 
+-- | Opens a 'PiLcd' with the given 'LcdAddress' and 'LcdOptions', passes
+-- the 'PiLcd' to the body computation, and then closes the 'PiLcd',
+-- regardless of whether the body exited normally or exceptionally.
+-- If an exception occurred, the exception is shown on the LCD.
 withPiLcd :: LcdAddress
           -> LcdOptions
           -> (PiLcd -> IO a)
           -> IO a
 withPiLcd = withPiLcd' closePiLcd
 
+-- | Like 'withPiLcd', but in the non-exceptional case, the display is
+-- cleared and the backlight is turned off.
 withPiLcdThenTurnOff :: LcdAddress
                      -> LcdOptions
                      -> (PiLcd -> IO a)
