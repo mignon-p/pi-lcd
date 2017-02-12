@@ -183,6 +183,9 @@ buttonLeft   = bit bitLeft
 allBits :: Word16
 allBits = 0xffff
 
+lcdBits :: Word16
+lcdBits = 0x00fe -- rs, rw, e, db4-db7
+
 -- | Opens the LCD+keypad kit, at the specified address, with the
 -- specified options.
 openPiLcd :: LcdAddress -> LcdOptions -> IO PiLcd
@@ -190,10 +193,11 @@ openPiLcd la lo = do
   let lcdAddr = laAddr la
   h <- i2cOpen (laBus la)
   pe <- mkPortExpander (i2cReadReg h lcdAddr) (i2cWriteReg h lcdAddr)
-  let outputs = white + 0xe0 -- rs, rw, e
+  let outputs = white + lcdBits
   writeIoDir pe (complement outputs) allBits
   writeIPol  pe 0 allBits
   writeGpPu  pe buttonMask allBits
+  writeGpio  pe 0 lcdBits
   but <- newIORef 0
   let cb = mkCallbacks pe
   lcdInitialize cb
@@ -255,9 +259,7 @@ mkByte bus =
 sendFunc :: PortExpander -> LcdBus -> IO ()
 sendFunc pe bus = do
   let b = mkByte bus
-  writeGpio pe (fromIntegral b) 0xfe
-  let dataBits = 0x1e
-  writeIoDir pe 0 dataBits
+  writeGpio pe (fromIntegral b) lcdBits
 
 mkCallbacks :: PortExpander -> LcdCallbacks
 mkCallbacks pe =

@@ -72,7 +72,6 @@ write4 cb rs db = do
             , lbE = False
             , lbDB = db
             }
-  -- lcSend cb $ bus { lbE = False }
   lcSend cb $ bus { lbE = True }
   lcSend cb $ bus { lbE = False }
 
