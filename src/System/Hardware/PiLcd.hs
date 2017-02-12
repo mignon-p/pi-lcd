@@ -54,6 +54,7 @@ module System.Hardware.PiLcd
     -- package to convert to Normalization Form C.
   , updateDisplay
   , charFromAsciiArt
+  , nativeCharset
     -- * User Interface
     -- | Displays a simple user interface.  The first line of the display
     -- is used as a \"list box\", where the user can scroll through a
@@ -93,7 +94,7 @@ import System.Hardware.PiLcd.I2c
 import System.Hardware.PiLcd.Mcp23017
 import qualified System.Hardware.PiLcd.UnicodeLcd as U
 import System.Hardware.PiLcd.UnicodeLcd
-  (LcdOptions(..), defaultLcdOptions, RomCode(..))
+  (LcdOptions(..), defaultLcdOptions, RomCode(..), nativeCharset)
 import qualified System.Hardware.PiLcd.UserInterface as UI
 import System.Hardware.PiLcd.UserInterface
   (Button(..), ButtonDirection(..), ButtonEvent(..),

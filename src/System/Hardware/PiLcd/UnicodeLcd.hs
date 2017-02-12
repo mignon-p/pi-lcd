@@ -32,8 +32,10 @@ module System.Hardware.PiLcd.UnicodeLcd
   , RomCode(..)
     -- * Displaying text
   , updateDisplay
+    -- * Characters
   , getCharStatus
   , CharStatus(..)
+  , nativeCharset
   ) where
 
 import Control.Arrow
@@ -206,8 +208,9 @@ hashTables = [(RomA00, hashA00), (RomA02, hashA02)]
 
 mkTable :: [(Int, Word8)] -> [Word8] -> EncodingHash
 mkTable table identityChars =
-  H.fromList $ map (first chr) table ++ map f identityChars
+  H.fromList $ map (first chr) table ++ map f identityChars ++ map g [0..0xff]
   where f c = (chr $ fromIntegral c, c)
+        g c = (nativeCharset c, c)
 
 -- supportedChars :: Lcd -> [(Char, CharStatus)]
 
@@ -310,6 +313,15 @@ mkLcd cb lo = do
            }
   return $ Lcd lo cb ref cust ce
 
+-- | If for some reason you want to specify a character in the native
+-- 8-bit encoding of the LCD, instead of in Unicode, just call
+-- 'nativeCharset' on the 8-bit character value.  This maps it to a
+-- region of the Private Use Area which is treated specially.
+nativeCharset :: Word8 -> Char
+nativeCharset x = chr (0x10FE00 + fromIntegral x)
+
+-- | Indicates whether a character can be found as a built-in or
+-- custom character
 data CharStatus = CharBuiltin   -- ^ character is supported by the LCD's ROM
                 | CharCustom    -- ^ not supported by ROM, but available in
                                 -- <https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html 5x8 fixed font>,
