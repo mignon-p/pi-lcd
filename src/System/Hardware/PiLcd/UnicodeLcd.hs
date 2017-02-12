@@ -35,7 +35,7 @@ module System.Hardware.PiLcd.UnicodeLcd
     -- * Characters
   , getCharStatus
   , CharStatus(..)
-  , nativeCharset
+  , nativeChar
   ) where
 
 import Control.Arrow
@@ -210,7 +210,7 @@ mkTable :: [(Int, Word8)] -> [Word8] -> EncodingHash
 mkTable table identityChars =
   H.fromList $ map (first chr) table ++ map f identityChars ++ map g [0..0xff]
   where f c = (chr $ fromIntegral c, c)
-        g c = (nativeCharset c, c)
+        g c = (nativeChar c, c)
 
 -- supportedChars :: Lcd -> [(Char, CharStatus)]
 
@@ -315,10 +315,10 @@ mkLcd cb lo = do
 
 -- | If for some reason you want to specify a character in the native
 -- 8-bit encoding of the LCD, instead of in Unicode, just call
--- 'nativeCharset' on the 8-bit character value.  This maps it to a
+-- 'nativeChar' on the 8-bit character value.  This maps it to a
 -- region of the Private Use Area which is treated specially.
-nativeCharset :: Word8 -> Char
-nativeCharset x = chr (0x10FE00 + fromIntegral x)
+nativeChar :: Word8 -> Char
+nativeChar x = chr (0x10FE00 + fromIntegral x)
 
 -- | Indicates whether a character can be found as a built-in or
 -- custom character
