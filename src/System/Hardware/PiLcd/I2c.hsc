@@ -6,7 +6,6 @@ Description : Access peripherals via an I²C bus
 Copyright   : © Patrick Pelletier, 2017
 License     : BSD3
 Maintainer  : code@funwithsoftware.org
-Stability   : experimental
 Portability : Linux
 
 You can use this module to communicate with

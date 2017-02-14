@@ -4,7 +4,6 @@ Description : Control an Adafruit character LCD and keypad kit
 Copyright   : © Patrick Pelletier, 2017
 License     : BSD3
 Maintainer  : code@funwithsoftware.org
-Stability   : experimental
 Portability : Linux
 
 This module contains everything you need to use an
