@@ -11,7 +11,7 @@ Adafruit character LCD and keypad kit, all you need is
 `System.Hardware.PiLcd`.
 
 Before using this package, you'll need to make sure that
-[I2C is enabled][2] on your Raspberry Pi, under "Advanced Options" in
+[I²C is enabled][2] on your Raspberry Pi, under "Advanced Options" in
 `raspi-config`.
 
 Using `PiLcd` is as easy as:

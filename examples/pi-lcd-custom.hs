@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- a demo showing how you can define your own custom characters
+
 import Control.Arrow
 import Data.Char
 

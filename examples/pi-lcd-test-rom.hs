@@ -1,5 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- There are potentially two different character set ROMs that
+-- Adafruit might ship.  This lets you figure out which one you have.
+-- I'd be interested in hearing from anyone with an A02 ROM, because
+-- I have an A00 ROM.
+
+-- This also demonstrates the "nativeChar" facility, where you can
+-- specify a character in the LCD's native encoding, instead of Unicode.
+
 import Data.Monoid
 import qualified Data.Text as T
 import Data.Word
