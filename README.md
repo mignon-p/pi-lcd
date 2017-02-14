@@ -1,3 +1,6 @@
+[![Hackage](https://img.shields.io/hackage/v/pi-lcd.svg)](https://hackage.haskell.org/package/pi-lcd)
+[![Build Status](https://travis-ci.org/ppelleti/pi-lcd.svg?branch=master)](https://travis-ci.org/ppelleti/pi-lcd)
+
 This package allows using an
 [Adafruit character LCD and keypad kit][1] on a Raspberry Pi from
 Haskell.
