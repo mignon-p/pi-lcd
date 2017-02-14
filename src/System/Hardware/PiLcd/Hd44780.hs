@@ -12,6 +12,9 @@ Display Controller/Driver
 (<https://www.adafruit.com/datasheets/HD44780.pdf datasheet>),
 such as the one used in the
 <https://www.adafruit.com/category/808 Adafruit LCD+Keypad Kit>.
+
+Only supports 4-bit mode, write only.  The user specifies a
+callback for performing the actual I/O to the chip.
 -}
 
 module System.Hardware.PiLcd.Hd44780
@@ -34,9 +37,11 @@ import System.Clock
 
 import System.Hardware.PiLcd.Util
 
+-- Nanoseconds since some arbitrary point in time.
 getNanos :: IO Integer
 getNanos = toNanoSecs <$> getTime Monotonic
 
+-- Busy-wait for the specified number of nanoseconds.
 spin :: Int -> IO ()
 spin nanos = do
   start <- getNanos
@@ -46,29 +51,28 @@ spin nanos = do
         when (now < end) sp
   sp
 
+-- | Argument to 'lcSend'.  Specifies the state of the bus going to
+-- the HD44780.  The RW line is always 0, because we only do writes.
 data LcdBus =
   LcdBus
-  { lbRS :: Bool
-  , lbRW :: Bool
-  , lbE  :: Bool
-  , lbDB :: Word8 -- 4 LSB are DB4 to DB7
+  { lbRS :: Bool  -- ^ Register Select
+  , lbE  :: Bool  -- ^ Enable
+  , lbDB :: Word8 -- ^ 4 LSB are DB4 to DB7
   } deriving (Eq, Ord, Show, Read)
 
 instReg = False
 dataReg = True
 
-writeMode = False
-
+-- | Callback for communicating with the HD44780.
 data LcdCallbacks =
   LcdCallbacks
-  { lcSend :: LcdBus -> IO ()
+  { lcSend :: LcdBus -> IO () -- ^ Sets the values on the bus
   }
 
 write4 :: LcdCallbacks -> Bool -> Word8 -> IO ()
 write4 cb rs db = do
   let bus = LcdBus
             { lbRS = rs
-            , lbRW = writeMode
             , lbE = False
             , lbDB = db
             }

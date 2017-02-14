@@ -253,8 +253,9 @@ reverseNibble x =
 mkByte :: LcdBus -> Word8
 mkByte bus =
   bitIf (lbRS bus) 7 +
-  bitIf (lbRW bus) 6 +
+  -- RW (bit 6) is always 0, which means "write"
   bitIf (lbE  bus) 5 +
+  -- The data bus between the MCP23017 and the HD44780 is connected backwards!
   (reverseNibble (lbDB bus) `shiftL` 1)
 
 sendFunc :: PortExpander -> LcdBus -> IO ()
