@@ -65,7 +65,16 @@ data Lcd =
   , lcdEncoding :: CharEncoding
   }
 
-type CustomInfo = (Integer, [(Char, Integer)])
+data CustomInfo =
+  CustomInfo
+  { ciGeneration :: Integer           -- a counter that is incremented
+                                      -- each time updateDisplay is called
+  , ciChars      :: [(Char, Integer)] -- a list of 8 elements, one for each
+                                      -- custom character slot, indicating
+                                      -- which character is currently in the
+                                      -- slot, and when it was last used
+                                      -- (in terms of the generation counter)
+  }
 
 data CharEncoding =
   CharEncoding
@@ -304,7 +313,7 @@ mkLcd cb lo = do
   let ls = rearrange $ replicate (loLines lo) $ B.replicate (loColumns lo) 0x20
       nonChar = chr 0xffff -- a noncharacter according to Unicode standard
   ref <- newIORef ls
-  cust <- newIORef (0, replicate 8 (nonChar, 0))
+  cust <- newIORef $ CustomInfo 0 (replicate 8 (nonChar, 0))
   let (Just builtIn) = loRomCode lo `lookup` hashTables -- should be safe
       ce = CharEncoding
            { ceBuiltIn = builtIn
@@ -375,24 +384,24 @@ matchExistingChars cust chars =
 
 allocateCustomChars :: CustomInfo -> String -> CustomInfo
 allocateCustomChars ci chars =
-  let (chars', available) = matchExistingChars (snd ci) chars
+  let (chars', available) = matchExistingChars (ciChars ci) chars
       available' = map fst $ sortBy (comparing snd) available
       pairs = zip available' chars'
-      generation = 1 + fst ci
-      newStuff = zipWith replace [0..] (snd ci)
+      generation = 1 + ciGeneration ci
+      newStuff = zipWith replace [0..] (ciChars ci)
       replace i old@(c, _) = case i `lookup` pairs of
                                Nothing -> if c `elem` chars
                                           then (c, generation)
                                           else old
                                (Just c') -> (c', generation)
-  in (generation, newStuff)
+  in CustomInfo generation newStuff
 
 writeCustomChars :: Lcd -> String -> IO [Char]
 writeCustomChars lcd chars = do
   let ref = lcdCustom lcd
   ci <- readIORef ref
   let ci' = allocateCustomChars ci chars
-      oldNew = zip3 [0..] (map fst $ snd ci) (map fst $ snd ci')
+      oldNew = zip3 [0..] (map fst $ ciChars ci) (map fst $ ciChars ci')
   writeIORef ref ci'
   forM oldNew $ \(i, old, new) -> do
     when (old /= new) $ do
