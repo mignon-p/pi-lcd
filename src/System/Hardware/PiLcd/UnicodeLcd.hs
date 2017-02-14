@@ -77,8 +77,8 @@ data CharEncoding =
 -- | Specifies the characteristics of the LCD.
 data LcdOptions =
   LcdOptions
-  { loLines :: Int        -- ^ Number of lines
-  , loColumns :: Int      -- ^ Number of columns
+  { loLines   :: !Int     -- ^ Number of lines
+  , loColumns :: !Int     -- ^ Number of columns
   , loRomCode :: RomCode  -- ^ Built-in character set
   , loCustomChars :: [(Char, [Word8])] -- ^ Additional user-defined characters,
                                        -- beyond those in the 5x8 fixed font.

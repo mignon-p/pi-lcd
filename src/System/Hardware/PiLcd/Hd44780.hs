@@ -55,16 +55,16 @@ spin nanos = do
 -- the HD44780.  The RW line is always 0, because we only do writes.
 data LcdBus =
   LcdBus
-  { lbRS :: Bool  -- ^ Register Select
-  , lbE  :: Bool  -- ^ Enable
-  , lbDB :: Word8 -- ^ 4 LSB are DB4 to DB7
+  { lbRS :: !Bool  -- ^ Register Select
+  , lbE  :: !Bool  -- ^ Enable
+  , lbDB :: !Word8 -- ^ 4 LSB are DB4 to DB7
   } deriving (Eq, Ord, Show, Read)
 
 instReg = False
 dataReg = True
 
 -- | Callback for communicating with the HD44780.
-data LcdCallbacks =
+newtype LcdCallbacks =
   LcdCallbacks
   { lcSend :: LcdBus -> IO () -- ^ Sets the values on the bus
   }
