@@ -44,7 +44,11 @@ maintainer:          code@funwithsoftware.org
 -- A copyright notice.
 copyright:           © Patrick Pelletier, 2017
 
-category:            Hardware
+homepage:            https://github.com/ppelleti/pi-lcd
+
+bug-reports:         https://github.com/ppelleti/pi-lcd/issues
+
+category:            Hardware, Raspberrypi
 
 build-type:          Simple
 
@@ -52,6 +56,7 @@ build-type:          Simple
 -- README.
 extra-source-files:  README.md
                    , examples/LICENSE-FOR-EXAMPLES
+                   , util/make-font.hs
 
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.10
@@ -66,6 +71,10 @@ tested-with:         GHC==7.6.3
                    , GHC==7.8.4
                    , GHC==7.10.3
                    , GHC==8.0.2
+
+source-repository head
+  Type:     git
+  Location: https://github.com/ppelleti/pi-lcd.git
 
 
 library
