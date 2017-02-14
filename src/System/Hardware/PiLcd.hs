@@ -351,8 +351,8 @@ wrapLine columns txt
   | otherwise = let (first, rest) = T.splitAt columns txt
                 in first : wrapLine columns rest
 
-displayException :: PiLcd -> SomeException -> IO ()
-displayException lcd se = do
+putExceptionOnLcd :: PiLcd -> SomeException -> IO ()
+putExceptionOnLcd lcd se = do
   let columns = loColumns $ U.lcdOptions $ plLcd lcd
       rows = loLines $ U.lcdOptions $ plLcd lcd
       txt = padLine (columns * rows) $ T.pack $ show se
@@ -370,7 +370,7 @@ withPiLcd' closeFunc la lo body = do
   eth <- try (body lcd)
   case eth of
     Left e -> do
-      displayException lcd e
+      putExceptionOnLcd lcd e
       closePiLcd lcd
       throwIO e
     Right x -> do
