@@ -2,6 +2,8 @@
 
 {-# LANGUAGE MultiWayIf #-}
 
+-- © Patrick Pelletier, 2017, BSD3
+
 {-
 Converts the file 5x8.bdf (available from
 https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html) to a more compact

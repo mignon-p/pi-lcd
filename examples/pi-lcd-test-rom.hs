@@ -8,6 +8,8 @@
 -- This also demonstrates the "nativeChar" facility, where you can
 -- specify a character in the LCD's native encoding, instead of Unicode.
 
+-- This example is dedicated to the public domain (cc0) by Patrick Pelletier
+
 import Data.Monoid
 import qualified Data.Text as T
 import Data.Word

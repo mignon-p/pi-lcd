@@ -2,6 +2,8 @@
 
 -- a demo of the user interface
 
+-- This example is dedicated to the public domain (cc0) by Patrick Pelletier
+
 import qualified Data.Text as T
 
 import Control.Exception

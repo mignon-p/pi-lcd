@@ -2,6 +2,8 @@
 
 -- a demo showing how you can define your own custom characters
 
+-- This example is dedicated to the public domain (cc0) by Patrick Pelletier
+
 import Control.Arrow
 import Data.Char
 

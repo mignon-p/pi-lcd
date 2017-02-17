@@ -1,5 +1,7 @@
 {-# LANGUAGE MultiWayIf #-}
 
+-- © Patrick Pelletier, 2017, BSD3
+
 module System.Hardware.PiLcd.Util
   ( padLine
   , bitIf

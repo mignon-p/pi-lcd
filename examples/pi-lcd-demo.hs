@@ -2,6 +2,8 @@
 
 -- a demo of buttons and backlight colors
 
+-- This example is dedicated to the public domain (cc0) by Patrick Pelletier
+
 import Control.Exception
 import Control.Monad
 import Data.Bits
