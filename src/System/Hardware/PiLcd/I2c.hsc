@@ -9,7 +9,7 @@ Maintainer  : code@funwithsoftware.org
 Portability : Linux
 
 You can use this module to communicate with
-<https://en.wikipedia.org/wiki/I%C2%B2C I²C> peripherals on Linux.
+<https://en.wikipedia.org/wiki/I%C2%B2C I2C> peripherals on Linux.
 -}
 
 module System.Hardware.PiLcd.I2c
@@ -125,8 +125,8 @@ collectResults ((Write xs):segs) bytePtr =
 -- | Performs an
 -- <https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/Documentation/i2c/dev-interface I2C_RDWR>
 -- transaction.
-i2cTransaction :: I2cHandle    -- ^ handle to an I2C bus
-               -> Int          -- ^ address of device on I2C bus
+i2cTransaction :: I2cHandle    -- ^ handle to an I²C bus
+               -> Int          -- ^ address of device on I²C bus
                -> [Segment]    -- ^ list of read/write segments to perform
                -> IO [[Word8]] -- ^ list of bytes returned for each read segment
 i2cTransaction (Fd fd) addr segs = do

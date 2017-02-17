@@ -8,7 +8,8 @@ Portability : Linux
 
 This module contains everything you need to use an
 <https://www.adafruit.com/categories/808 Adafruit character LCD and keypad kit>
-from Haskell.
+from Haskell.  The kit has a 16x2 character LCD, an RGB backlight which can
+produce 8 possible colors, and five buttons: Up, Down, Left, Right, and Select.
 -}
 
 module System.Hardware.PiLcd
@@ -23,6 +24,8 @@ module System.Hardware.PiLcd
   , RomCode(..)
   , defaultLcdOptions
     -- * Backlight color
+    -- | The kit lacks PWM, so each of the red, green, and blue LEDs can
+    -- be either on or off, yielding 8 possible colors.
   , Color(..)
   , setBacklightColor
     -- * Buttons
@@ -38,7 +41,7 @@ module System.Hardware.PiLcd
   , buttonUp
   , buttonLeft
     -- * Display
-    -- | Displays Unicode text on an LCD.  Only updates the parts
+    -- | Displays Unicode text on the LCD.  Only updates the parts
     -- of the LCD which have changed.  Automatically manages
     -- custom characters, using the
     -- <https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html 5x8 fixed font>
