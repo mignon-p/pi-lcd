@@ -66,7 +66,13 @@ dataReg = True
 -- | Callback for communicating with the HD44780.
 newtype LcdCallbacks =
   LcdCallbacks
-  { lcSend :: LcdBus -> IO () -- ^ Sets the values on the bus
+  { lcSend :: LcdBus -> IO () -- ^ Sets the values on the bus.  If using a
+                              -- direct parallel interface on a fast processor,
+                              -- you may need to insert a brief (500 ns) delay
+                              -- after writing to the bus.  (This is
+                              -- unnecessary on the LCD+Keypad Kit, because
+                              -- the I²C operation of the MCP23017 provides
+                              -- more than enough delay.)
   }
 
 write4 :: LcdCallbacks -> Bool -> Word8 -> IO ()
