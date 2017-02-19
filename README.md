@@ -55,6 +55,8 @@ the future.  Please contact me, by filing a GitHub issue, or by
 [email][4], if you have any feedback on the library.  I'd also be
 curious to hear how the library is being used!
 
+[![LCD with Haskell logo](http://funwithsoftware.org/images/2017-Haskell-LCD-800px.jpg)](https://www.flickr.com/photos/107479024@N04/32593808450/)
+
 [1]: https://www.adafruit.com/categories/808
 [2]: https://learn.adafruit.com/adafruits-raspberry-pi-lesson-4-gpio-setup/configuring-i2c
 [3]: https://www.cl.cam.ac.uk/~mgk25/ucs-fonts.html
