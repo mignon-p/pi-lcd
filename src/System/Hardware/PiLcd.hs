@@ -10,6 +10,15 @@ This module contains everything you need to use an
 <https://www.adafruit.com/categories/808 Adafruit character LCD and keypad kit>
 from Haskell.  The kit has a 16x2 character LCD, an RGB backlight which can
 produce 8 possible colors, and five buttons: Up, Down, Left, Right, and Select.
+
+Since the physical LCD+Keypad Kit is a global resource, only one
+'PiLcd' should exist at a time.  (Except in the very exceptional case
+where you have more than one LCD+Keypad Kit connected to your
+Raspberry Pi, at different addresses on the I²C bus.)  If you create
+more than one 'PiLcd' at once when you only have one physical
+LCD+Keypad Kit, things will get very confused.  Also, 'PiLcd' is not
+threadsafe, so if you want to use the 'PiLcd' from more than one
+thread, you will need to handle locking yourself.
 -}
 
 module System.Hardware.PiLcd
@@ -113,13 +122,17 @@ data PiLcd =
   , plLcd       :: U.Lcd
   }
 
--- | Specifies how to connect to the LCD+keypad kit.  'laBus' should be 1 for
+-- | Specifies how to connect to the LCD+Keypad Kit.  'laBus' should be 1 for
 -- revision 2 Raspberry Pis and later.  For revision 1 Pis (those with 256 MB
 -- of RAM), the bus should be 0.  If you need a way to automatically detect
 -- this, consider using the @piBoardRev@ function in the
 -- <https://hackage.haskell.org/package/wiringPi wiringPi package>.
 -- On the other hand, there is not much reason to ever change
--- 'laAddr' from the default 0x20.
+-- 'laAddr' from the default 0x20.  (The only reason would be if you changed
+-- the address of your LCD+Keypad Kit by messing with the address bit
+-- solder pads on the back.  And probably the only reason you'd want to do
+-- that is to connect more than one LCD+Keypad Kit.  That should work, in
+-- theory, but hasn't been tested.)
 data LcdAddress =
   LcdAddress
   { laBus :: Int  -- ^ The I2C bus to communicate on
