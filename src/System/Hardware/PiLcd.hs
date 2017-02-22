@@ -19,6 +19,11 @@ more than one 'PiLcd' at once when you only have one physical
 LCD+Keypad Kit, things will get very confused.  Also, 'PiLcd' is not
 threadsafe, so if you want to use the 'PiLcd' from more than one
 thread, you will need to handle locking yourself.
+
+However, 'PiLcd' is safe in the presence of async exceptions.  (In
+other words, 'updateDisplay' and other operations will either
+atomically occur or not occur; they will not be interrupted in the
+middle and leave the hardware in an inconsistent state.)
 -}
 
 module System.Hardware.PiLcd

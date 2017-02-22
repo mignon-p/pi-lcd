@@ -15,6 +15,9 @@ such as the one used in the
 
 Only supports 4-bit mode, write only.  The user specifies a
 callback for performing the actual I/O to the chip.
+
+Access to the LCD is not threadsafe (you'll need to do your own
+locking), but it is safe in the presence of async exceptions.
 -}
 
 module System.Hardware.PiLcd.Hd44780
@@ -29,6 +32,7 @@ module System.Hardware.PiLcd.Hd44780
 
 import Control.Applicative
 import Control.Concurrent
+import Control.Exception
 import Control.Monad
 import Data.Bits
 import qualified Data.ByteString as B
@@ -87,8 +91,9 @@ write4 cb rs db = do
 
 write8 :: LcdCallbacks -> Bool -> Word8 -> IO ()
 write8 cb rs db = do
-  write4 cb rs (db `shiftR` 4)
-  write4 cb rs (db .&. 0xf)
+  mask_ $ do
+    write4 cb rs (db `shiftR` 4)
+    write4 cb rs (db .&. 0xf)
   spin 37000
 
 -- | Initializes the LCD and clears the screen.  You must

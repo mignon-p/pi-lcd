@@ -10,6 +10,9 @@ This module lets you control an
 (<https://cdn-shop.adafruit.com/datasheets/mcp23017.pdf datasheet>),
 such as the one used in the
 <https://www.adafruit.com/category/808 Adafruit LCD+Keypad Kit>.
+
+'PortExpander' is not threadsafe (you'll need to do your own locking),
+but it is safe in the presence of async exceptions.
 -}
 
 module System.Hardware.PiLcd.Mcp23017
@@ -48,6 +51,7 @@ module System.Hardware.PiLcd.Mcp23017
   ) where
 
 import Control.Applicative
+import Control.Exception
 import Data.Bits
 import Data.IORef
 import Data.Word
@@ -101,7 +105,7 @@ readReg16 :: ReadFunc -> Word8 -> IO Word16
 readReg16 rf reg = word8sToWord16 <$> rf reg 2
 
 modifyReg16 :: WriteFunc -> IORef Word16 -> Word8 -> Word16 -> Word16 -> IO ()
-modifyReg16 wf shadow reg bits mask = do
+modifyReg16 wf shadow reg bits mask = mask_ $ do
   old16 <- readIORef shadow
   let val = (old16 .&. complement mask) .|. (bits .&. mask)
       [o8a, o8b]       = word16ToWord8s old16

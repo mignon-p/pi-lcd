@@ -20,6 +20,9 @@ contains decomposed characters, consider using the
 package to convert to Normalization Form C.
 
 Displays up to 20x4 should be supported, although only 16x2 has been tested.
+
+'Lcd' is not threadsafe (you'll need to do your own locking), but it
+is safe in the presence of async exceptions.
 -}
 
 module System.Hardware.PiLcd.UnicodeLcd
@@ -39,6 +42,7 @@ module System.Hardware.PiLcd.UnicodeLcd
   ) where
 
 import Control.Arrow
+import Control.Exception
 import Control.Monad
 import Data.Char
 import qualified Data.ByteString as B
@@ -276,7 +280,7 @@ txtToBs ce txt = B.pack $ map (fromMaybe 0x3f . unicodeToByte ce) $ T.unpack txt
 -- internal encoding, and automatically creates custom characters for
 -- characters which are not directly supported by the LCD.
 updateDisplay :: Lcd -> [T.Text] -> IO ()
-updateDisplay lcd newText = do
+updateDisplay lcd newText = mask_ $ do
   let cc = getCustomChars lcd $ concatMap T.unpack newText
   cm <- writeCustomChars lcd cc
   let ce = (lcdEncoding lcd) { ceCustomMapping = cm }
