@@ -14,6 +14,11 @@ to select a virtual \"button\".  When the user presses the
 Select button, the interaction is considered done, and the calling
 program is given the list item and button selection that the user
 made.
+
+If there is only one item in the list, the up and down buttons won't
+do anything, and the \"↕\" indicator will not be displayed.  So, if
+you want to display a static line of text and some buttons, just
+create a single-element list containing the line of text.
 -}
 
 module System.Hardware.PiLcd.UserInterface
