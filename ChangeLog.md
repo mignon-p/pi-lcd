@@ -1,7 +1,9 @@
 <!-- -*- text -*- prevent Emacs from formatting ChangeLog incorrectly -->
 # Revision history for pi-lcd
 
-## Unreleased
+## 0.1.0.1 - Unreleased
+
+* Fix space leak
 
 * Mask async exceptions to make operations atomic.
 

@@ -51,6 +51,7 @@ module System.Hardware.PiLcd.Mcp23017
   ) where
 
 import Control.Applicative
+import Control.DeepSeq
 import Control.Exception
 import Data.Bits
 import Data.IORef
@@ -115,7 +116,7 @@ modifyReg16 wf shadow reg bits mask = mask_ $ do
     (False, True)  -> wf reg [v8a]
     (True, False)  -> wf (reg + 1) [v8b]
     (True, True)   -> return ()
-  writeIORef shadow val
+  val `deepseq` writeIORef shadow val
 
 -- | Given a 'ReadFunc' and a 'WriteFunc', makes a 'PortExpander'.
 mkPortExpander :: ReadFunc -> WriteFunc -> IO PortExpander

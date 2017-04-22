@@ -42,6 +42,7 @@ module System.Hardware.PiLcd.UnicodeLcd
   ) where
 
 import Control.Arrow
+import Control.DeepSeq
 import Control.Exception
 import Control.Monad
 import Data.Char
@@ -79,6 +80,9 @@ data CustomInfo =
                                       -- slot, and when it was last used
                                       -- (in terms of the generation counter)
   }
+
+instance NFData CustomInfo where
+  rnf x = (rnf $ ciGeneration x) `seq` (rnf $ ciChars x)
 
 data CharEncoding =
   CharEncoding
@@ -294,7 +298,7 @@ updateDisplay' lcd ce newTxt = do
       spans = bytesToSpans oldBs newBs
   forM_ spans $ \(line, col, bs) ->
     lcdWrite (lcdCb lcd) (fromIntegral line) (fromIntegral col) bs
-  writeIORef (lcdLines lcd) newBs
+  newBs `deepseq` writeIORef (lcdLines lcd) newBs
 
 -- Convert multiple lines to 2 or fewer lines.
 -- In a 4-line display, lines 1 and 3 are treated as a single line,
@@ -406,7 +410,7 @@ writeCustomChars lcd chars = do
   ci <- readIORef ref
   let ci' = allocateCustomChars ci chars
       oldNew = zip3 [0..] (map fst $ ciChars ci) (map fst $ ciChars ci')
-  writeIORef ref ci'
+  ci' `deepseq` writeIORef ref ci'
   forM oldNew $ \(i, old, new) -> do
     when (old /= new) $ do
       let (Just cd) = getCharData lcd new -- this should be safe

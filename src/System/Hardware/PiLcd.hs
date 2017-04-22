@@ -103,6 +103,7 @@ module System.Hardware.PiLcd
   ) where
 
 import Control.Concurrent
+import Control.DeepSeq
 import Control.Exception
 import Data.Bits
 import Data.IORef
@@ -257,7 +258,8 @@ getButtonEvent lcd = do
     else do
       let aBit = findBit changedButs
           press = testBit newButs aBit
-      writeIORef (plButtons lcd) (oldButs `xor` bit aBit)
+          x = oldButs `xor` bit aBit
+      x `deepseq` writeIORef (plButtons lcd) x
       let dir = if press then Press else Release
       return $ Just $ ButtonEvent (buttonList !! aBit) dir
 

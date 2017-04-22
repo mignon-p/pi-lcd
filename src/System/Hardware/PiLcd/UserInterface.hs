@@ -34,6 +34,7 @@ module System.Hardware.PiLcd.UserInterface
   , ButtonEvent(..)
   ) where
 
+import Control.DeepSeq
 import qualified Data.Text as T
 
 import System.Hardware.PiLcd.Util
@@ -59,6 +60,9 @@ data UiData =
   , udButtons :: [T.Text] -- ^ buttons to be displayed on the second line
   } deriving (Eq, Ord, Show, Read)
 
+instance NFData UiData where
+  rnf x = (rnf $ udList x) `seq` (rnf $ udButtons x)
+
 -- | The current state of the user interaction.
 data UiState =
   UiState
@@ -66,6 +70,9 @@ data UiState =
   , usButtons  :: Int  -- ^ index of button from 'udButtons' currently highlighted
   , usInternal :: InternalState -- ^ opaque data
   } deriving (Eq, Ord, Show)
+
+instance NFData UiState where
+  rnf x = (rnf $ usList x) `seq` (rnf $ usButtons x)
 
 -- | Opaque data.
 data InternalState = BeforeSelect | DuringSelect | AfterSelect
@@ -101,7 +108,8 @@ runUi dat st mbe columns =
                       (Just be) -> updateState st be
       st'' = sanitizeState dat st'
       ls = renderUi dat st'' columns
-  in (ls, noAfter st'', done)
+      result = (ls, noAfter st'', done)
+  in result `deepseq` result
 
 updateState :: UiState -> ButtonEvent -> (UiState, Bool)
 updateState st (ButtonEvent ButtonSelect Press) = (st { usInternal = DuringSelect }, False)
