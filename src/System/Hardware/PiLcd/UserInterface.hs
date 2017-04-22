@@ -55,9 +55,9 @@ data ButtonEvent = ButtonEvent Button ButtonDirection
 -- | The data to be displayed in the user interface.
 data UiData =
   UiData
-  { udList    :: [T.Text] -- ^ items to be displayed one-at-a-time on
-                          -- the first line
-  , udButtons :: [T.Text] -- ^ buttons to be displayed on the second line
+  { udList    :: ![T.Text] -- ^ items to be displayed one-at-a-time on
+                           -- the first line
+  , udButtons :: ![T.Text] -- ^ buttons to be displayed on the second line
   } deriving (Eq, Ord, Show, Read)
 
 instance NFData UiData where
@@ -66,9 +66,9 @@ instance NFData UiData where
 -- | The current state of the user interaction.
 data UiState =
   UiState
-  { usList     :: Int  -- ^ index of item from 'udList' currently displayed
-  , usButtons  :: Int  -- ^ index of button from 'udButtons' currently highlighted
-  , usInternal :: InternalState -- ^ opaque data
+  { usList     :: !Int  -- ^ index of item from 'udList' currently displayed
+  , usButtons  :: !Int  -- ^ index of button from 'udButtons' currently highlighted
+  , usInternal :: !InternalState -- ^ opaque data
   } deriving (Eq, Ord, Show)
 
 instance NFData UiState where

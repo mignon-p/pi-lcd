@@ -126,11 +126,11 @@ import System.Hardware.PiLcd.Util
 -- | An opaque type representing an LCD and keypad kit.
 data PiLcd =
   PiLcd
-  { plHandle    :: I2cHandle
-  , plExpander  :: PortExpander
+  { plHandle    :: !I2cHandle
+  , plExpander  :: !PortExpander
   , plButtons   :: IORef Word8
-  , plCallbacks :: LcdCallbacks
-  , plLcd       :: U.Lcd
+  , plCallbacks :: !LcdCallbacks
+  , plLcd       :: !U.Lcd
   }
 
 -- | Specifies how to connect to the LCD+Keypad Kit.  'laBus' should be 1 for

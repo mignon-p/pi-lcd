@@ -63,22 +63,22 @@ import System.Hardware.PiLcd.Util
 -- | An opaque type representing an LCD.
 data Lcd =
   Lcd
-  { lcdOptions  :: LcdOptions  -- ^ Returns the 'LcdOptions' that were passed to 'mkLcd'
-  , lcdCb       :: LcdCallbacks
+  { lcdOptions  :: !LcdOptions  -- ^ Returns the 'LcdOptions' that were passed to 'mkLcd'
+  , lcdCb       :: !LcdCallbacks
   , lcdLines    :: IORef [B.ByteString]
   , lcdCustom   :: IORef CustomInfo
-  , lcdEncoding :: CharEncoding
+  , lcdEncoding :: !CharEncoding
   }
 
 data CustomInfo =
   CustomInfo
-  { ciGeneration :: Integer           -- a counter that is incremented
-                                      -- each time updateDisplay is called
-  , ciChars      :: [(Char, Integer)] -- a list of 8 elements, one for each
-                                      -- custom character slot, indicating
-                                      -- which character is currently in the
-                                      -- slot, and when it was last used
-                                      -- (in terms of the generation counter)
+  { ciGeneration :: !Integer           -- a counter that is incremented
+                                       -- each time updateDisplay is called
+  , ciChars      :: ![(Char, Integer)] -- a list of 8 elements, one for each
+                                       -- custom character slot, indicating
+                                       -- which character is currently in the
+                                       -- slot, and when it was last used
+                                       -- (in terms of the generation counter)
   }
 
 instance NFData CustomInfo where
